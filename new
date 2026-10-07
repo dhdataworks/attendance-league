@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     ATTENDANCE LEAGUE — CLEAN EDITION
+     Light card layout with a left navigation rail, matching the
+     behaviour dashboard. Weekly points: 3 / 2 / 1 / 0.
+     ============================================================ */
+  :root {
+    --bg:        #f4f6fb;
+    --card:      #ffffff;
+    --line:      #e6e9f0;
+    --line-soft: #f0f2f7;
+    --ink:       #1f2937;
+    --ink-2:     #4b5563;
+    --dim:       #8a93a6;
+    --accent:    #5b5bd6;
+    --accent-bg: #eef0ff;
+
+    /* result bands */
+    --win:     #15803d;  --win-bg:   #e7f6ec;
+    --draw:    #a16207;  --draw-bg:  #fdf3dc;
+    --point:   #2563c9;  --point-bg: #e7effc;
+    --none:    #c2415a;  --none-bg:  #fcebee;
+
+    /* podium */
+    --gold:   #c99a1e;  --gold-bg:   #fdf5dd;
+    --silver: #7a8597;  --silver-bg: #eef1f5;
+    --bronze: #b06a3b;  --bronze-bg: #f9ece3;
+
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(16,24,40,.04), 0 4px 16px rgba(16,24,40,.05);
+    --shadow-lg: 0 12px 40px rgba(16,24,40,.16);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: var(--bg); }
+  body {
+    color: var(--ink); font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; }
+  [hidden] { display: none !important; }
+
+  .ico { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* ===================== APP SHELL ===================== */
+  .app { display: grid; grid-template-columns: 236px 1fr; min-height: 100vh; }
+
+  .rail {
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    background: var(--card); border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; padding: 20px 14px;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; padding: 0 8px 20px; }
+  .brand-mark {
+    width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+    background: var(--accent-bg); color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-mark .ico { width: 21px; height: 21px; }
+  .brand-title { font-weight: 700; font-size: 0.98rem; line-height: 1.2; }
+  .brand-sub { font-size: 0.76rem; color: var(--dim); }
+
+  .nav-label {
+    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--dim); padding: 14px 10px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px; width: 100%;
+    background: none; border: none; border-radius: 10px; cursor: pointer;
+    padding: 9px 10px; font-size: 0.88rem; font-weight: 500; color: var(--ink-2);
+    text-align: left; transition: background .15s, color .15s;
+  }
+  .nav-item:hover { background: var(--line-soft); color: var(--ink); }
+  .nav-item.active { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+  .rail-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line-soft); position: relative; }
+  .credit-btn {
+    position: absolute; right: 6px; bottom: 9px; width: 22px; height: 22px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--card); color: var(--dim);
+    font-size: 0.72rem; font-weight: 600; cursor: pointer;
+  }
+  .credit-popup {
+    position: absolute; left: 6px; right: 6px; bottom: 44px; display: none;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: var(--shadow); padding: 8px 10px; font-size: 0.76rem; color: var(--ink-2);
+  }
+  .credit-popup.open { display: block; }
+
+  .main { min-width: 0; padding: 26px 32px 60px; }
+
+  /* ===================== TOP BAR ===================== */
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .topbar h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+  .status-line { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+    padding: 3px 10px; font-size: 0.76rem; color: var(--ink-2);
+  }
+  .top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px 14px; font-size: 0.85rem; font-weight: 500; color: var(--ink);
+    cursor: pointer; transition: border-color .15s, background .15s; white-space: nowrap;
+  }
+  .btn:hover { border-color: #cfd5e1; background: #fafbfd; }
+  .btn .ico { width: 16px; height: 16px; color: var(--ink-2); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #4b4bc4; border-color: #4b4bc4; }
+  .btn-primary .ico { color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 0.78rem; border-radius: 8px; }
+
+  /* ===================== ADMIN BAR ===================== */
+  .admin-bar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 10px 12px; margin-bottom: 20px;
+  }
+  .admin-tag {
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--accent); background: var(--accent-bg); border-radius: 6px; padding: 3px 8px; margin-right: 4px;
+  }
+  .entry-tracker { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--ink-2); }
+  .entry-bar { width: 110px; height: 6px; background: var(--line-soft); border-radius: 999px; overflow: hidden; }
+  .entry-bar-fill { height: 100%; background: var(--accent); width: 0; border-radius: 999px; transition: width .4s; }
+
+  /* ===================== CARDS & LAYOUT ===================== */
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px;
+  }
+  .card + .card, .grid + .card, .card + .grid, .grid + .grid { margin-top: 16px; }
+  .grid > .card, .house-grid > .card { margin-top: 0; }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .card-title { font-size: 0.98rem; font-weight: 600; }
+  .card-hint { font-size: 0.8rem; color: var(--dim); margin-top: 2px; }
+  .grid { display: grid; gap: 16px; }
+  .grid-kpi { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grid-2 { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+
+  .view { animation: viewIn .22s ease-out; }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  /* KPI tiles */
+  .kpi { padding: 16px 18px; }
+  .kpi-label { font-size: 0.78rem; color: var(--dim); font-weight: 500; }
+  .kpi-value { font-size: 1.65rem; font-weight: 700; letter-spacing: -0.02em; margin-top: 4px; line-height: 1.15; }
+  .kpi-value small { font-size: 0.9rem; font-weight: 500; color: var(--dim); margin-left: 3px; }
+  .kpi-sub { font-size: 0.78rem; color: var(--ink-2); margin-top: 4px; }
+  .up { color: var(--win); } .down { color: var(--none); } .flat { color: var(--dim); }
+
+  /* ===================== SMALL PARTS ===================== */
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; display: inline-block; box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.06); }
+  .form-dots { display: inline-flex; gap: 3px; }
+  .fd { width: 8px; height: 8px; border-radius: 50%; }
+  .fd.win { background: var(--win); } .fd.draw { background: #e2a12b; }
+  .fd.point { background: var(--point); } .fd.none { background: var(--none); }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+    border-radius: 999px; padding: 1px 8px; font-size: 0.72rem; font-weight: 500;
+    background: var(--line-soft); color: var(--ink-2);
+  }
+  .chip.gold { background: var(--gold-bg); color: #8a6a10; }
+  .chip.accent { background: var(--accent-bg); color: var(--accent); }
+
+  .res {
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    border-radius: 7px; padding: 2px 8px; font-size: 0.74rem; font-weight: 600;
+  }
+  .res.win   { background: var(--win-bg);   color: var(--win); }
+  .res.draw  { background: var(--draw-bg);  color: var(--draw); }
+  .res.point { background: var(--point-bg); color: var(--point); }
+  .res.none  { background: var(--none-bg);  color: var(--none); }
+
+  .rank {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 28px; height: 28px; padding: 0 6px; border-radius: 8px;
+    font-weight: 600; font-size: 0.84rem; color: var(--ink-2); background: var(--line-soft);
+  }
+  .rank.r1 { background: var(--gold-bg);   color: var(--gold); }
+  .rank.r2 { background: var(--silver-bg); color: var(--silver); }
+  .rank.r3 { background: var(--bronze-bg); color: var(--bronze); }
+  .move { font-size: 0.7rem; font-weight: 600; }
+
+  .empty { color: var(--dim); font-size: 0.86rem; padding: 6px 0; }
+
+  /* ===================== TOP 5 & HOUSE BARS (overview) ===================== */
+  .mini-row {
+    display: grid; grid-template-columns: 36px minmax(0,1fr) auto auto; align-items: center; gap: 12px;
+    padding: 10px 6px; border-bottom: 1px solid var(--line-soft); cursor: pointer; border-radius: 8px;
+  }
+  .mini-row:last-child { border-bottom: none; }
+  .mini-row:hover { background: #fafbfd; }
+  .mini-name { display: flex; align-items: center; gap: 8px; font-weight: 600; min-width: 0; }
+  .mini-name span.t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mini-house { font-size: 0.76rem; color: var(--dim); font-weight: 400; }
+  .mini-att { font-size: 0.82rem; color: var(--ink-2); }
+  .mini-pts { font-weight: 700; min-width: 54px; text-align: right; }
+  .mini-pts small { font-weight: 500; color: var(--dim); font-size: 0.74rem; margin-left: 2px; }
+
+  .hbar { padding: 9px 4px; cursor: pointer; border-radius: 8px; }
+  .hbar:hover { background: #fafbfd; }
+  .hbar-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.86rem; }
+  .hbar-top > b { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .hbar-top > span { white-space: nowrap; color: var(--ink-2); }
+  .hbar-track { height: 8px; background: var(--line-soft); border-radius: 999px; margin-top: 7px; overflow: hidden; }
+  .hbar-fill { height: 100%; border-radius: 999px; transition: width .6s ease; }
+
+  /* ===================== POINTS KEY ===================== */
+  .key-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+  .key-item { display: flex; align-items: center; gap: 12px; border-radius: 12px; padding: 12px 14px; }
+  .key-item.win { background: var(--win-bg); } .key-item.draw { background: var(--draw-bg); }
+  .key-item.point { background: var(--point-bg); } .key-item.none { background: var(--none-bg); }
+  .key-pts { font-size: 1.6rem; font-weight: 700; line-height: 1; min-width: 26px; text-align: center; }
+  .key-item.win .key-pts { color: var(--win); } .key-item.draw .key-pts { color: var(--draw); }
+  .key-item.point .key-pts { color: var(--point); } .key-item.none .key-pts { color: var(--none); }
+  .key-text b { display: block; font-size: 0.86rem; }
+  .key-text span { font-size: 0.78rem; color: var(--ink-2); }
+  .key-note { font-size: 0.8rem; color: var(--dim); margin-top: 12px; }
+
+  /* ===================== LEAGUE TABLE ===================== */
+  .table-card { padding: 0; overflow: hidden; }
+  .t-head, .t-row {
+    display: grid; grid-template-columns: 70px minmax(0,1fr) 70px 56px 76px 92px;
+    align-items: center; gap: 10px; padding: 0 20px;
+  }
+  .t-head {
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--dim); background: #fafbfd; border-bottom: 1px solid var(--line); height: 42px;
+  }
+  .t-head .n, .t-row .n { text-align: center; }
+  .t-head .p, .t-row .p { text-align: right; }
+  .t-row { min-height: 68px; padding-top: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--line-soft); cursor: pointer; transition: background .15s; }
+  .t-row:last-child { border-bottom: none; }
+  .t-row:hover { background: #fafbfd; }
+  .c-pos { display: flex; align-items: center; gap: 6px; }
+  .g-name { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.94rem; flex-wrap: wrap; }
+  .g-house { font-size: 0.76rem; font-weight: 400; color: var(--dim); }
+  .g-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+  .t-row .n { font-weight: 500; color: var(--ink-2); }
+  .t-row .p b { font-size: 1.05rem; font-weight: 700; }
+  .t-row .p span { display: block; font-size: 0.72rem; color: var(--dim); }
+
+  /* ===================== HOUSES ===================== */
+  .house-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
+  .house-card { cursor: pointer; padding: 0; overflow: hidden; transition: border-color .15s, box-shadow .15s; }
+  .house-card:hover { border-color: #cfd5e1; box-shadow: 0 6px 22px rgba(16,24,40,.08); }
+  .house-strip { height: 6px; }
+  .house-body { padding: 16px 18px 18px; }
+  .house-top { display: flex; align-items: center; justify-content: space-between; }
+  .house-name { font-weight: 700; font-size: 1.02rem; }
+  .house-pts { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-top: 8px; line-height: 1.1; }
+  .house-pts small { font-size: 0.85rem; color: var(--dim); font-weight: 500; margin-left: 3px; }
+  .house-stats { display: flex; gap: 14px; margin-top: 8px; font-size: 0.8rem; color: var(--ink-2); flex-wrap: wrap; }
+  .house-link { margin-top: 12px; font-size: 0.8rem; font-weight: 600; color: var(--accent); }
+
+  /* ===================== BADGES ===================== */
+  .badge-list { display: flex; flex-direction: column; gap: 10px; }
+  .badge-item { border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .badge-item.locked { background: #fbfcfd; }
+  .badge-item summary {
+    list-style: none; display: grid; grid-template-columns: 40px minmax(0,1fr) auto 18px;
+    align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer;
+  }
+  .badge-item summary::-webkit-details-marker { display: none; }
+  .badge-emoji { font-size: 1.5rem; text-align: center; }
+  .badge-item.locked .badge-emoji { filter: grayscale(1); opacity: .45; }
+  .badge-name { font-weight: 600; }
+  .badge-desc { font-size: 0.8rem; color: var(--dim); }
+  .badge-count { font-size: 0.8rem; color: var(--ink-2); white-space: nowrap; }
+  .badge-chev { color: var(--dim); transition: transform .2s; }
+  .badge-item[open] .badge-chev { transform: rotate(180deg); }
+  .badge-winners { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 14px 66px; }
+  .gchip {
+    display: inline-flex; align-items: center; gap: 6px; background: var(--line-soft);
+    border-radius: 999px; padding: 3px 10px; font-size: 0.78rem; font-weight: 500;
+  }
+
+  /* ===================== NEWS ===================== */
+  .news-list { display: flex; flex-direction: column; gap: 8px; }
+  .news-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: #fafbfd; border: 1px solid var(--line-soft); }
+  .news-n { font-size: 0.74rem; font-weight: 600; color: var(--accent); background: var(--accent-bg); border-radius: 6px; padding: 2px 7px; flex-shrink: 0; margin-top: 1px; }
+  .news-t { font-size: 0.9rem; }
+
+  /* ===================== SETUP ===================== */
+  .setup h2 { font-size: 1.15rem; margin-bottom: 6px; }
+  .setup p { color: var(--ink-2); margin-bottom: 12px; }
+  .setup ol { margin: 0 0 16px 20px; color: var(--ink-2); }
+  .setup ol li { margin-bottom: 6px; }
+
+  /* ===================== MODALS ===================== */
+  .overlay {
+    position: fixed; inset: 0; z-index: 500; display: none;
+    background: rgba(17,24,39,.42); backdrop-filter: blur(2px);
+    align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto;
+  }
+  .overlay.open { display: flex; animation: fadeIn .18s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--card); border-radius: 18px; box-shadow: var(--shadow-lg);
+    width: 100%; max-width: 560px; padding: 24px;
+  }
+  .modal-wide { max-width: 860px; }
+  .modal h2 { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .modal-sub { color: var(--dim); font-size: 0.85rem; margin: 4px 0 18px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  .modal-actions .btn { flex: 1; justify-content: center; }
+  .input {
+    width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+    font-family: inherit; font-size: 0.9rem; color: var(--ink); background: #fff;
+  }
+  .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+  details.help summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 0.84rem; margin-top: 14px; }
+  details.help div { font-size: 0.84rem; color: var(--ink-2); margin-top: 10px; }
+  details.help p { margin-bottom: 8px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 18px; }
+  .stat { background: #fafbfd; border: 1px solid var(--line-soft); border-radius: 12px; padding: 12px; }
+  .stat .v { font-size: 1.3rem; font-weight: 700; }
+  .stat .l { font-size: 0.74rem; color: var(--dim); }
+
+  .hg-row { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; }
+  .hg-row:hover { background: #fafbfd; }
+  .hg-top { display: grid; grid-template-columns: minmax(0,1fr) 60px 70px 60px; gap: 10px; align-items: center; }
+  .hg-top .n { text-align: center; color: var(--ink-2); font-size: 0.85rem; }
+  .hg-top .p { text-align: right; font-weight: 700; }
+  .hg-weeks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .wk { display: inline-flex; flex-direction: column; align-items: center; min-width: 46px; border-radius: 8px; padding: 3px 4px; }
+  .wk i { font-style: normal; font-size: 0.64rem; color: var(--dim); }
+  .wk b { font-size: 0.78rem; font-weight: 600; }
+  .wk.win { background: var(--win-bg); color: var(--win); } .wk.draw { background: var(--draw-bg); color: var(--draw); }
+  .wk.point { background: var(--point-bg); color: var(--point); } .wk.none { background: var(--none-bg); color: var(--none); }
+  .wk.blank { background: var(--line-soft); color: var(--dim); }
+
+  /* ===================== TUTOR CARD ===================== */
+  .tutor-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px;
+    border-top: 5px solid var(--cc); break-inside: avoid; page-break-inside: avoid;
+  }
+  .tc-head { display: flex; align-items: center; gap: 12px; }
+  .tc-name { font-weight: 700; font-size: 1.05rem; line-height: 1.2; }
+  .tc-house { font-size: 0.8rem; color: var(--dim); }
+  .tc-pos { margin-left: auto; text-align: right; }
+  .tc-pos .n { font-weight: 700; font-size: 1.2rem; line-height: 1.1; }
+  .tc-pos .l { font-size: 0.74rem; color: var(--dim); }
+  .tc-stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin: 14px 0; }
+  .tc-stat { background: #fafbfd; border: 1px solid var(--line-soft); border-radius: 10px; padding: 8px; text-align: center; }
+  .tc-stat .v { font-weight: 700; font-size: 1.05rem; }
+  .tc-stat .l { font-size: 0.7rem; color: var(--dim); }
+  .tc-spark { margin: 4px 0 10px; }
+  .tc-section { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); margin: 14px 0 8px; }
+  .tc-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tc-badge-lg { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 0.8rem; }
+  .tc-badge-lg i { font-style: normal; color: var(--dim); display: block; font-size: 0.74rem; }
+  .tc-note { font-size: 0.82rem; color: var(--ink-2); background: #fafbfd; border: 1px solid var(--line-soft); border-radius: 10px; padding: 9px 11px; margin-top: 10px; }
+  .tc-foot { font-size: 0.72rem; color: var(--dim); margin-top: 12px; }
+  .tc-large { padding: 24px; }
+  .tc-large .tc-name { font-size: 1.35rem; }
+  .ledger { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  .ledger th { text-align: left; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dim); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  .ledger td { padding: 7px 8px; border-bottom: 1px solid var(--line-soft); }
+  .ledger .num { text-align: right; }
+  .ledger tfoot td { font-weight: 700; border-bottom: none; padding-top: 10px; }
+
+  /* ===================== FULL-SCREEN SHEETS (highlights, tutor cards) ===================== */
+  .sheet-overlay {
+    position: fixed; inset: 0; z-index: 600; display: none; overflow-y: auto;
+    background: var(--bg); padding: 30px 20px 110px;
+  }
+  .sheet-overlay.open { display: block; animation: fadeIn .18s ease-out; }
+  .sheet { max-width: 900px; margin: 0 auto; }
+  .sheet-head { text-align: center; margin-bottom: 20px; }
+  .sheet-head h2 { font-size: 1.6rem; font-weight: 700; }
+  .sheet-head p { color: var(--dim); }
+  .sheet-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 610; }
+  .sheet-actions .btn { box-shadow: var(--shadow-lg); }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+  .hl-section { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--dim); margin: 22px 0 10px; }
+  .hl-row { display: flex; align-items: center; gap: 14px; }
+  .hl-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+
+  /* ===================== ASSEMBLY REVEAL ===================== */
+  .reveal-overlay {
+    position: fixed; inset: 0; z-index: 700; display: none; flex-direction: column; align-items: center;
+    background: var(--bg); padding: 40px 20px 30px; overflow-y: auto;
+  }
+  .reveal-overlay.open { display: flex; }
+  .reveal-sub { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+  .reveal-heading { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; letter-spacing: -0.02em; margin: 6px 0 26px; text-align: center; }
+  .reveal-stage { width: 100%; max-width: 760px; min-height: 260px; display: flex; align-items: center; justify-content: center; }
+  .reveal-stage > * { animation: revealIn .35s ease-out; }
+  @keyframes revealIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .reveal-start { text-align: center; }
+  .reveal-start p { color: var(--ink-2); margin-bottom: 20px; font-size: 1rem; }
+  .reveal-inter { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 700; color: var(--ink-2); text-align: center; }
+  .reveal-card {
+    width: 100%; background: var(--card); border: 1px solid var(--line); border-left: 8px solid var(--rc);
+    border-radius: 18px; box-shadow: var(--shadow); padding: 26px 30px; display: flex; align-items: center; gap: 26px;
+  }
+  .reveal-pos { font-size: 3rem; font-weight: 700; color: var(--dim); min-width: 110px; text-align: center; line-height: 1; }
+  .reveal-name { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 700; line-height: 1.15; }
+  .reveal-meta { display: flex; gap: 22px; margin-top: 8px; color: var(--ink-2); font-size: 1rem; flex-wrap: wrap; }
+  .reveal-meta b { color: var(--ink); }
+  .reveal-champ {
+    width: 100%; text-align: center; background: var(--card); border: 1px solid var(--line);
+    border-top: 8px solid var(--rc); border-radius: 22px; box-shadow: var(--shadow-lg); padding: 34px 26px;
+  }
+  .reveal-champ .trophy { font-size: 3.4rem; line-height: 1; }
+  .reveal-champ .lab { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-top: 10px; }
+  .reveal-champ .nm { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700; letter-spacing: -0.02em; margin: 6px 0 12px; line-height: 1.1; }
+  .reveal-done { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 900px; margin-top: 24px; }
+  .reveal-done .gchip { background: var(--card); border: 1px solid var(--line); }
+  .reveal-done .gchip b { color: var(--dim); font-weight: 600; }
+  .reveal-hint { color: var(--dim); font-size: 0.85rem; margin-top: 14px; }
+  .reveal-controls { display: flex; gap: 10px; margin-top: auto; padding-top: 26px; flex-wrap: wrap; justify-content: center; }
+
+  /* ===================== KIOSK ===================== */
+  .kiosk {
+    position: fixed; inset: 0; z-index: 800; display: none; flex-direction: column;
+    background: var(--bg); padding: 2.4vh 3vw;
+  }
+  .kiosk.open { display: flex; }
+  .kiosk-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+  .kiosk-brand { display: flex; align-items: center; gap: 14px; }
+  .kiosk-brand .brand-mark { width: 52px; height: 52px; border-radius: 14px; }
+  .kiosk-brand .brand-mark .ico { width: 28px; height: 28px; }
+  .kiosk-title { font-size: clamp(1.4rem, 2.6vw, 2.4rem); font-weight: 700; letter-spacing: -0.02em; }
+  .kiosk-meta { font-size: clamp(0.9rem, 1.2vw, 1.15rem); color: var(--dim); }
+  .kiosk-clock { font-size: clamp(1.6rem, 3vw, 2.8rem); font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .kiosk-exit { position: fixed; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--dim); cursor: pointer; opacity: .35; }
+  .kiosk-exit:hover { opacity: 1; }
+  .kiosk-slide-title { font-size: clamp(1.2rem, 2vw, 1.9rem); font-weight: 700; margin: 2.4vh 0 1.6vh; }
+  .kiosk-body { flex: 1; min-height: 0; overflow: hidden; }
+  .kiosk-slide { height: 100%; transition: opacity .45s ease; }
+  .kiosk-slide.fading { opacity: 0; }
+  .kiosk-rows { display: flex; flex-direction: column; gap: 1vh; }
+  .kiosk-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1vh 1.6vw; }
+  .k-row {
+    display: grid; grid-template-columns: 5vw minmax(0,1fr) auto auto; align-items: center; gap: 1.6vw;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
+    padding: 1.05vh 1.6vw; font-size: clamp(1rem, 1.8vw, 1.7rem);
+  }
+  .kiosk-cols .k-row { font-size: clamp(0.9rem, 1.35vw, 1.3rem); padding: 0.8vh 1.2vw; }
+  .k-row .chip { font-size: 0.55em; }
+  .k-row .rank { min-width: 2.2em; height: 1.8em; font-size: 0.85em; border-radius: 10px; }
+  .k-name { font-weight: 600; display: flex; align-items: center; gap: 0.6em; min-width: 0; }
+  .k-name .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .k-name .h { font-weight: 400; color: var(--dim); font-size: 0.7em; }
+  .k-att { color: var(--ink-2); font-size: 0.85em; }
+  .k-pts { font-weight: 700; min-width: 4.2em; text-align: right; }
+  .k-pts small { font-weight: 500; color: var(--dim); font-size: 0.6em; margin-left: 3px; }
+  .k-houses { display: grid; grid-template-columns: repeat(auto-fit, minmax(16vw, 1fr)); gap: 1.6vw; }
+  .k-house { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
+  .k-house .house-strip { height: 1.2vh; }
+  .k-house-body { padding: 2.4vh 1.6vw; }
+  .k-house-body .pos { font-size: clamp(0.9rem, 1.2vw, 1.2rem); color: var(--dim); font-weight: 600; }
+  .k-house-body .nm { font-size: clamp(1.4rem, 2.4vw, 2.4rem); font-weight: 700; }
+  .k-house-body .pts { font-size: clamp(2rem, 4vw, 4rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin-top: 1vh; }
+  .k-house-body .pts small { font-size: 0.4em; color: var(--dim); font-weight: 500; margin-left: 4px; }
+  .k-house-body .avg { font-size: clamp(0.9rem, 1.3vw, 1.3rem); color: var(--ink-2); }
+  .k-news { display: flex; flex-direction: column; gap: 1.4vh; }
+  .k-news div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 1.8vh 1.8vw; font-size: clamp(1rem, 1.9vw, 1.8rem); }
+  .k-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(26vw, 1fr)); gap: 1.4vh 1.4vw; }
+  .k-badge { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 1.6vh 1.4vw; }
+  .k-badge .hd { display: flex; align-items: center; gap: 0.6em; font-size: clamp(1rem, 1.5vw, 1.5rem); font-weight: 700; }
+  .k-badge .ds { font-size: clamp(0.8rem, 1vw, 1rem); color: var(--dim); }
+  .k-badge .ws { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1vh; }
+  .k-badge .gchip { font-size: clamp(0.75rem, 0.95vw, 0.95rem); }
+  .kiosk-dots { display: flex; justify-content: center; gap: 8px; padding-top: 1.6vh; }
+  .kiosk-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); transition: background .3s, width .3s; }
+  .kiosk-dot.on { background: var(--accent); width: 26px; border-radius: 999px; }
+
+  /* ===================== TOAST ===================== */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 140%);
+    background: var(--ink); color: #fff; border-radius: 10px; padding: 10px 18px;
+    font-size: 0.86rem; z-index: 900; transition: transform .25s ease, opacity .25s; box-shadow: var(--shadow-lg);
+    opacity: 0; visibility: hidden;
+  }
+  .toast.show { transform: translate(-50%, 0); opacity: 1; visibility: visible; }
+
+  /* ===================== RESPONSIVE ===================== */
+  @media (max-width: 1100px) {
+    .grid-kpi { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid-2 { grid-template-columns: minmax(0,1fr); }
+  }
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; }
+    .rail { position: sticky; top: 0; z-index: 50; height: auto; flex-direction: row; align-items: center; padding: 8px 10px; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--line); }
+    .brand { padding: 0 8px 0 0; }
+    .brand-title, .brand-sub, .nav-label { display: none; }
+    .rail nav { display: flex; gap: 2px; }
+    .nav-item { width: auto; white-space: nowrap; padding: 8px 10px; }
+    .rail-foot { margin: 0 0 0 4px; padding: 0; border: none; display: flex; }
+    .credit-btn, .credit-popup { display: none; }
+    .main { padding: 18px 14px 50px; }
+    .key-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .t-head, .t-row { grid-template-columns: 52px minmax(0,1fr) 64px 64px; padding-left: 12px; padding-right: 12px; }
+    .hide-sm { display: none; }
+    .stat-grid, .tc-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .reveal-card { flex-direction: column; text-align: center; gap: 10px; }
+    .kiosk-cols { grid-template-columns: 1fr; }
+  }
+
+  /* ===================== PRINT ===================== */
+  @media print {
+    html, body { background: #fff; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .rail, .top-actions, .admin-bar, .toast, .overlay, .sheet-overlay, .reveal-overlay, .kiosk, .sheet-actions { display: none !important; }
+    .app { display: block; }
+    .main { padding: 0; }
+    .card, .tutor-card { box-shadow: none; }
+    .t-row, .card, .house-card, .badge-item { break-inside: avoid; }
+    .view { animation: none; }
+
+    body.printing-group > *:not(#detailOverlay) { display: none !important; }
+    body.printing-group #detailOverlay { display: block !important; position: static; background: none; padding: 0; backdrop-filter: none; }
+    body.printing-group #detailOverlay .modal { box-shadow: none; max-width: 100%; padding: 0; }
+    body.printing-group #detailOverlay .modal-actions { display: none; }
+
+    body.printing-sheet > *:not(.sheet-overlay.open) { display: none !important; }
+    body.printing-sheet .sheet-overlay.open { display: block !important; position: static; padding: 0; background: #fff; overflow: visible; }
+    body.printing-sheet .sheet-actions { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===================== LEFT RAIL ===================== -->
+  <aside class="rail">
+    <div class="brand">
+      <div class="brand-mark" data-ico="trophy"></div>
+      <div>
+        <div class="brand-title" id="brandTitle">Attendance League</div>
+        <div class="brand-sub">Weekly points</div>
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-label">League</div>
+      <button class="nav-item active" data-view="overview" onclick="showView('overview')"><span data-ico="grid"></span>Overview</button>
+      <button class="nav-item" data-view="table"    onclick="showView('table')"><span data-ico="list"></span>League table</button>
+      <button class="nav-item" data-view="houses"   onclick="showView('houses')"><span data-ico="shield"></span>Houses</button>
+      <button class="nav-item" data-view="badges"   onclick="showView('badges')"><span data-ico="award"></span>Badges</button>
+      <button class="nav-item" data-view="news"     onclick="showView('news')"><span data-ico="news"></span>League news</button>
+
+      <div class="nav-label">Display</div>
+      <button class="nav-item" onclick="openKiosk()"><span data-ico="tv"></span>Kiosk mode</button>
+      <button class="nav-item" onclick="openReveal()"><span data-ico="trophy"></span>Assembly reveal</button>
+      <button class="nav-item" onclick="openHighlights()"><span data-ico="star"></span>Highlights</button>
+    </nav>
+
+    <div class="rail-foot">
+      <button class="nav-item" id="showAdminBtn" onclick="toggleAdmin()"><span data-ico="sliders"></span>Admin</button>
+      <button class="credit-btn" onclick="toggleCredit()" title="About the build">i</button>
+      <div class="credit-popup" id="creditPopup">Built by dhdataworks@gmail.com</div>
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="main">
+
+    <header class="topbar">
+      <div>
+        <h1 id="viewTitle">Overview</h1>
+        <div class="status-line" id="statusLine"></div>
+      </div>
+      <div class="top-actions">
+        <button class="btn" onclick="printPage()"><span data-ico="print"></span>Print</button>
+      </div>
+    </header>
+
+    <div class="admin-bar" id="adminBar" hidden>
+      <span class="admin-tag">Admin</span>
+      <button class="btn btn-sm" onclick="openDataSource()"><span data-ico="link"></span>Data source</button>
+      <button class="btn btn-sm" onclick="refreshData()"><span data-ico="refresh"></span>Refresh</button>
+      <button class="btn btn-sm" onclick="openTutorCards()"><span data-ico="idcard"></span>Tutor cards</button>
+      <div class="entry-tracker">
+        <span id="weekCompletion">—</span>
+        <div class="entry-bar"><div class="entry-bar-fill" id="entryBarFill"></div></div>
+      </div>
+    </div>
+
+    <div id="setupState"></div>
+
+    <div id="dashboard" hidden>
+
+      <!-- OVERVIEW -->
+      <section class="view" id="view-overview">
+        <div class="grid grid-kpi" id="kpiRow"></div>
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-head">
+              <div><div class="card-title">Top 5</div><div class="card-hint">Click a group to see its card</div></div>
+              <button class="btn btn-sm" onclick="showView('table')">Full table</button>
+            </div>
+            <div id="top5"></div>
+          </div>
+          <div class="card" id="houseStandingsCard">
+            <div class="card-head">
+              <div><div class="card-title">House standings</div><div class="card-hint">Total points of every group in the house</div></div>
+              <button class="btn btn-sm" onclick="showView('houses')">Houses</button>
+            </div>
+            <div id="houseBars"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">League news</div><div class="card-hint" id="newsHint">—</div></div>
+            <button class="btn btn-sm" onclick="showView('news')">All headlines</button>
+          </div>
+          <div class="news-list" id="newsPreview"></div>
+        </div>
+      </section>
+
+      <!-- LEAGUE TABLE -->
+      <section class="view" id="view-table" hidden>
+        <div class="card">
+          <div class="card-head" style="margin-bottom:12px"><div class="card-title">How points are scored each week</div></div>
+          <div class="key-grid">
+            <div class="key-item win"><div class="key-pts">3</div><div class="key-text"><b>Win</b><span>95% and above</span></div></div>
+            <div class="key-item draw"><div class="key-pts">2</div><div class="key-text"><b>Draw</b><span>90% – 94.9%</span></div></div>
+            <div class="key-item point"><div class="key-pts">1</div><div class="key-text"><b>Point</b><span>75% – 89.9%</span></div></div>
+            <div class="key-item none"><div class="key-pts">0</div><div class="key-text"><b>No points</b><span>Below 75%</span></div></div>
+          </div>
+          <div class="key-note">Groups are ranked on total points. If two groups are level, the higher average attendance goes above. Badges are for recognition and don't add points.</div>
+        </div>
+        <div class="card table-card">
+          <div class="t-head">
+            <div>#</div>
+            <div>Group</div>
+            <div class="n hide-sm">Weeks</div>
+            <div class="n hide-sm">Wins</div>
+            <div class="n">Att %</div>
+            <div class="p">Points</div>
+          </div>
+          <div id="tableBody"></div>
+        </div>
+      </section>
+
+      <!-- HOUSES -->
+      <section class="view" id="view-houses" hidden>
+        <div class="house-grid" id="houseGrid"></div>
+      </section>
+
+      <!-- BADGES -->
+      <section class="view" id="view-badges" hidden>
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">Attendance badges</div><div class="card-hint">Open a badge to see which groups have earned it</div></div>
+            <button class="btn btn-sm" id="badgeToggle" onclick="toggleAllBadges()">Expand all</button>
+          </div>
+          <div class="badge-list" id="badgeBoard"></div>
+        </div>
+      </section>
+
+      <!-- NEWS -->
+      <section class="view" id="view-news" hidden>
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">League news</div><div class="card-hint" id="newsListSub">—</div></div></div>
+          <div class="news-list" id="newsList"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ============ MODALS ============ -->
+
+<!-- PIN -->
+<div class="overlay" id="pinOverlay">
+  <div class="modal" style="max-width:340px;text-align:center;margin-top:10vh">
+    <h2 style="justify-content:center">Enter PIN</h2>
+    <div class="modal-sub">Admin access required</div>
+    <input type="password" class="input" id="pinInput" inputmode="numeric" maxlength="8" style="text-align:center;font-size:1.3rem;letter-spacing:0.3em" onkeydown="if(event.key==='Enter')submitPin()">
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="submitPin()">Unlock</button>
+      <button class="btn" onclick="closePin()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DATA SOURCE -->
+<div class="overlay" id="dataSourceOverlay">
+  <div class="modal" style="margin-top:6vh">
+    <h2>Data source</h2>
+    <div class="modal-sub">Connect the dashboard to your published Google Sheet</div>
+    <p style="font-size:0.86rem;color:var(--ink-2);margin-bottom:10px">Paste the <b>published CSV link</b> from your Google Sheet (File → Share → Publish to web → CSV).</p>
+    <input type="text" class="input" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/e/..../pub?output=csv">
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveDataSource()">Connect &amp; load</button>
+      <button class="btn" onclick="closeDataSource()">Cancel</button>
+    </div>
+    <details class="help">
+      <summary>How to set up the sheet</summary>
+      <div>
+        <p>Row 1 holds the headings: <b>Group</b> · <b>House</b> · <b>Colour</b> · <b>Emoji</b> · <b>Week 1</b> · <b>Week 2</b> · … (add as many week columns as you need).</p>
+        <p>One row per group. Leave <b>House</b> blank if you're not using houses. <b>Colour</b> and <b>Emoji</b> are optional. Type attendance percentages into the week columns as they happen.</p>
+        <p>Then: File → Share → <b>Publish to web</b> → choose the sheet → <b>Comma-separated values (.csv)</b> → Publish → copy the link.</p>
+        <button class="btn btn-sm" onclick="downloadTemplate()">Download sheet template (CSV)</button>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- GROUP DETAIL (the group's card, full size) -->
+<div class="overlay" id="detailOverlay">
+  <div class="modal modal-wide">
+    <div id="detailCard"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="printGroup()"><span data-ico="print"></span>Print this card</button>
+      <button class="btn" onclick="closeDetail()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOUSE DETAIL -->
+<div class="overlay" id="houseDetailOverlay">
+  <div class="modal modal-wide">
+    <h2 id="houseDetailName">—</h2>
+    <div class="modal-sub" id="houseDetailSub">—</div>
+    <div class="stat-grid" id="houseDetailStats"></div>
+    <div class="tc-section" style="margin-top:0">Groups in this house</div>
+    <div id="houseGroupsList"></div>
+    <div class="modal-actions"><button class="btn" onclick="closeHouseDetail()">Close</button></div>
+  </div>
+</div>
+
+<!-- HIGHLIGHTS -->
+<div class="sheet-overlay" id="highlightsOverlay">
+  <div class="sheet" id="highlightsSheet"></div>
+  <div class="sheet-actions">
+    <button class="btn btn-primary" onclick="printSheet()"><span data-ico="print"></span>Print / save PDF</button>
+    <button class="btn" onclick="closeHighlights()">Close</button>
+  </div>
+</div>
+
+<!-- TUTOR CARDS -->
+<div class="sheet-overlay" id="cardsOverlay">
+  <div class="sheet" style="max-width:1100px">
+    <div class="sheet-head">
+      <h2>Tutor cards</h2>
+      <p>One card per group. Print and hand to form tutors, or show on the tutor-room screen.</p>
+    </div>
+    <div class="cards-grid" id="cardsGrid"></div>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-primary" onclick="printSheet()"><span data-ico="print"></span>Print / save PDF</button>
+    <button class="btn" onclick="closeTutorCards()">Close</button>
+  </div>
+</div>
+
+<!-- ASSEMBLY REVEAL -->
+<div class="reveal-overlay" id="revealOverlay">
+  <div class="reveal-sub" id="revealSub">Attendance League</div>
+  <div class="reveal-heading">The results are in</div>
+  <div class="reveal-stage" id="revealStage"></div>
+  <div class="reveal-hint" id="revealHint" hidden>Click anywhere or press Space to reveal the next place</div>
+  <div class="reveal-done" id="revealDone"></div>
+  <div class="reveal-controls" id="revealControls"></div>
+</div>
+
+<!-- KIOSK -->
+<div class="kiosk" id="kioskOverlay">
+  <button class="kiosk-exit" onclick="closeKiosk()" title="Exit kiosk (Esc)">✕</button>
+  <div class="kiosk-top">
+    <div class="kiosk-brand">
+      <div class="brand-mark" data-ico="trophy"></div>
+      <div>
+        <div class="kiosk-title" id="kioskTitle">Attendance League</div>
+        <div class="kiosk-meta" id="kioskMeta"></div>
+      </div>
+    </div>
+    <div class="kiosk-clock" id="kioskClock">--:--</div>
+  </div>
+  <div class="kiosk-slide-title" id="kioskSlideTitle"></div>
+  <div class="kiosk-body"><div class="kiosk-slide" id="kioskSlide"></div></div>
+  <div class="kiosk-dots" id="kioskDots"></div>
+</div>
+
+<script>
+// ===================== CONFIG =====================
+
+// ┌───────────────────────────────────────────────────────────────────┐
+// │  BUILT-IN GOOGLE SHEET LINK                                        │
+// │  Paste your published CSV link between the quotes below.           │
+// │  Once set, EVERY device that opens this page connects              │
+// │  automatically — no need to link the sheet on each device.        │
+// │  (File → Share → Publish to web → CSV → copy the link.)           │
+// └───────────────────────────────────────────────────────────────────┘
+const BUILT_IN_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJvuGkKmhv26IeA0Qs-JRyXSx08J_5vvIHxIACbCZ47koo5KWWpCLCZHwYmNOuZRMPrejJgvgPCzgE/pub?gid=0&single=true&output=csv';
+
+const STORAGE_KEY = 'attendance_league_clean_v1';
+const DEFAULT_PIN = '1234';
+
+// ===================== POINTS =====================
+// One result per week, scored on that week's attendance.
+const BANDS = [
+  { min: 95, key: 'win',   label: 'Win',       pts: 3 },
+  { min: 90, key: 'draw',  label: 'Draw',      pts: 2 },
+  { min: 75, key: 'point', label: 'Point',     pts: 1 },
+  { min: 0,  key: 'none',  label: 'No points', pts: 0 },
+];
+function bandFor(pct) { return BANDS.find(b => pct >= b.min) || BANDS[BANDS.length - 1]; }
+const STREAK_THRESHOLD = 95;   // a streak week is a win week
+
+// ===================== ICONS =====================
+const ICONS = {
+  grid:    '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  list:    '<path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+  shield:  '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+  award:   '<circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 21l5-3 5 3-1.5-7"/>',
+  news:    '<path d="M3 11v2a1 1 0 0 0 1 1h3l6 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M17 9a4 4 0 0 1 0 6"/>',
+  tv:      '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  trophy:  '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8 21h8M9 17h6"/>',
+  star:    '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.8 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/>',
+  sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  print:   '<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/>',
+  refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
+  link:    '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  idcard:  '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.8-1.4 1.9-2 3-2s2.2.6 3 2M15 10h3M15 13h3"/>',
+};
+function ico(name) {
+  return `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+}
+function paintIcons(root) {
+  (root || document).querySelectorAll('[data-ico]').forEach(el => {
+    if (el.dataset.painted) return;
+    el.insertAdjacentHTML('afterbegin', ico(el.dataset.ico));
+    el.dataset.painted = '1';
+  });
+}
+
+// ===================== STATE =====================
+let settings = { sheetUrl: '', pin: DEFAULT_PIN, title: 'Attendance League' };
+let classes = [];          // [{ id, name, house, colour, emoji, attendance: {1:96.2,...} }]
+let weekCount = 0;
+let usingHouses = false;
+let isAuthenticated = false;
+let pinCallback = null;
+let lastLoadedAt = null;
+let currentView = 'overview';
+let statsCache = new Map();
+
+const VIEW_TITLES = { overview: 'Overview', table: 'League table', houses: 'Houses', badges: 'Badges', news: 'League news' };
+// Plain colour names typed in the sheet are swapped for softer shades that sit well on white
+const NAMED_COLOURS = { red: '#e05a6a', green: '#3aa76d', yellow: '#e5b931', blue: '#3d7dd8', purple: '#8b6fd6',
+  orange: '#e88a3a', pink: '#d665a8', teal: '#2fb3a6', black: '#374151', grey: '#9aa3b2', gray: '#9aa3b2' };
+const DEFAULT_HOUSE_COLOURS = ['#e05a6a', '#3aa76d', '#e0b33a', '#3d8bd9', '#8b6fd6', '#e08a3a', '#d665a8', '#2fb3a6'];
+
+// ===================== BADGES =====================
+// Recognition only — badges never add points. Checks receive `es`, the group's
+// weeks with data in order as [{ w, v }], so they work at any point in the season.
+const BADGES = [
+  { id:'on_target',     emoji:'🎯', name:'On Target',     desc:'A week at 97%+',
+    check: es => es.some(e => e.v >= 97) },
+  { id:'personal_best', emoji:'⚡', name:'Personal Best', desc:'Beat your own best week',
+    check: es => es.some((e, i) => i > 0 && e.v > Math.max(...es.slice(0, i).map(x => x.v))) },
+  { id:'comeback',      emoji:'🛡', name:'Comeback',      desc:'Back to 95%+ after a week below 90%',
+    check: es => es.some((e, i) => i > 0 && es[i-1].v < 90 && e.v >= 95) },
+  { id:'treble',        emoji:'🔥', name:'Treble',        desc:'Three weeks at 95%+',
+    check: es => es.filter(e => e.v >= 95).length >= 3 },
+  { id:'unbeaten',      emoji:'🌟', name:'Unbeaten',      desc:'Three weeks in, never below 90%',
+    check: es => es.length >= 3 && es.every(e => e.v >= 90) },
+  { id:'perfect_week',  emoji:'💯', name:'Perfect Week',  desc:'100% in a single week',
+    check: es => es.some(e => e.v === 100) },
+  { id:'hat_trick',     emoji:'⭐', name:'Hat-trick',     desc:'Three weeks at 97%+',
+    check: es => es.filter(e => e.v >= 97).length >= 3 },
+  { id:'diamond',       emoji:'💎', name:'Diamond',       desc:'97%+ in every week played (min 3)',
+    check: es => es.length >= 3 && es.every(e => e.v >= 97) },
+];
+
+// Weeks with data, in order, up to and including maxW
+function entriesUpTo(cls, maxW) {
+  const out = [], limit = maxW || weekCount;
+  for (let w = 1; w <= limit; w++) if (cls.attendance[w] !== undefined) out.push({ w, v: cls.attendance[w] });
+  return out;
+}
+function getEarnedBadges(cls, maxW) { const es = entriesUpTo(cls, maxW); return BADGES.filter(b => b.check(es)); }
+function getNextBadge(cls) {
+  const earned = new Set(getEarnedBadges(cls).map(b => b.id));
+  // Comeback only makes sense to aim for after a week below 90%
+  const hadDip = entriesUpTo(cls).some(e => e.v < 90);
+  return BADGES.find(b => !earned.has(b.id) && (b.id !== 'comeback' || hadDip)) || null;   // ordered easiest first
+}
+
+// ===================== PERSISTENCE =====================
+function loadSettings() {
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) settings = Object.assign(settings, JSON.parse(raw)); } catch (e) {}
+}
+function saveSettings() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch (e) {}
+}
+
+// ===================== CSV FETCH & PARSE =====================
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i], next = text[i + 1];
+    if (inQuotes) {
+      if (ch === '"' && next === '"') { field += '"'; i++; }
+      else if (ch === '"') inQuotes = false;
+      else field += ch;
+    } else {
+      if (ch === '"') inQuotes = true;
+      else if (ch === ',') { row.push(field); field = ''; }
+      else if (ch === '\r') { /* skip */ }
+      else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else field += ch;
+    }
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim() !== ''));
+}
+
+function normaliseSheetUrl(url) {
+  url = url.trim();
+  if (url.includes('output=csv') || url.includes('/pub?')) return url;
+  const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (m) {
+    let gid = '0';
+    const g = url.match(/[#&?]gid=([0-9]+)/);
+    if (g) gid = g[1];
+    return `https://docs.google.com/spreadsheets/d/${m[1]}/export?format=csv&gid=${gid}`;
+  }
+  return url;
+}
+
+async function fetchSheet(url) {
+  const resp = await fetch(normaliseSheetUrl(url), { cache: 'no-store' });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  return await resp.text();
+}
+
+function ingestRows(rows) {
+  if (!rows.length) throw new Error('The sheet appears to be empty.');
+  const header = rows[0].map(h => h.trim().toLowerCase());
+  const groupIdx  = header.findIndex(h => h === 'group' || h === 'reg group' || h === 'name' || h === 'registration group');
+  const houseIdx  = header.findIndex(h => h === 'house');
+  const colourIdx = header.findIndex(h => h === 'colour' || h === 'color' || h === 'house colour' || h === 'house color');
+  const emojiIdx  = header.findIndex(h => h === 'emoji' || h === 'icon' || h === 'badge');
+  const weekCols = [];
+  header.forEach((h, i) => { if (/^(week|wk|w)\s*\d+$/.test(h) || /week/.test(h)) weekCols.push(i); });
+
+  if (groupIdx === -1) throw new Error('No "Group" column found in the sheet.');
+  if (!weekCols.length) throw new Error('No week columns found. Add columns named "Week 1", "Week 2", etc.');
+
+  const out = [];
+  let houseSeen = false, colourCursor = 0;
+  const houseColourMap = {};
+  for (let r = 1; r < rows.length; r++) {
+    const cells = rows[r];
+    const name = (cells[groupIdx] || '').trim();
+    if (!name) continue;
+    const house = houseIdx > -1 ? (cells[houseIdx] || '').trim() : '';
+    if (house) houseSeen = true;
+    let colour = colourIdx > -1 ? (cells[colourIdx] || '').trim() : '';
+    if (NAMED_COLOURS[colour.toLowerCase()]) colour = NAMED_COLOURS[colour.toLowerCase()];
+    if (!colour) {
+      const key = house || name;
+      if (!houseColourMap[key]) houseColourMap[key] = DEFAULT_HOUSE_COLOURS[colourCursor++ % DEFAULT_HOUSE_COLOURS.length];
+      colour = houseColourMap[key];
+    }
+    const attendance = {};
+    weekCols.forEach((ci, wi) => {
+      const raw = (cells[ci] || '').trim().replace('%', '');
+      if (raw !== '' && !isNaN(parseFloat(raw))) attendance[wi + 1] = parseFloat(raw);
+    });
+    const emoji = emojiIdx > -1 ? (cells[emojiIdx] || '').trim() : '';
+    out.push({ id: r, name, house, colour, emoji, attendance });
+  }
+  classes = out;
+  weekCount = weekCols.length;
+  usingHouses = houseSeen;
+  lastLoadedAt = new Date();
+  statsCache = new Map();
+}
+
+async function loadFromSheet(url, opts) {
+  opts = opts || {};
+  const text = await fetchSheet(url);
+  ingestRows(parseCSV(text));
+  if (opts.silent !== true) toast('Data loaded from sheet');
+}
+
+// ===================== STATS =====================
+// The single source of truth for scoring.
+function getStats(cls, maxW) {
+  const key = cls.id + ':' + (maxW || 0);
+  if (statsCache.has(key)) return statsCache.get(key);
+  const es = entriesUpTo(cls, maxW);
+  let run = 0, pts = 0, total = 0, best = null;
+  const counts = { win: 0, draw: 0, point: 0, none: 0 };
+  const rows = es.map(e => {
+    const band = bandFor(e.v);
+    run = e.v >= STREAK_THRESHOLD ? run + 1 : 0;
+    pts += band.pts; total += e.v; counts[band.key]++;
+    if (best === null || e.v > best) best = e.v;
+    return { week: e.w, pct: e.v, band, pts: band.pts };
+  });
+  const played = rows.length;
+  const s = {
+    played, rows, pts,
+    wins: counts.win, draws: counts.draw, ones: counts.point, zeros: counts.none,
+    badges: BADGES.filter(b => b.check(es)),
+    overallPct: played ? total / played : null,
+    bestPct: best,
+    streak: run,
+    lastWeekPts: played ? rows[played - 1].pts : null,
+  };
+  statsCache.set(key, s);
+  return s;
+}
+
+function rankCompare(a, b, sa, sb) {
+  if (sb.pts !== sa.pts) return sb.pts - sa.pts;
+  if ((sb.overallPct || 0) !== (sa.overallPct || 0)) return (sb.overallPct || 0) - (sa.overallPct || 0);
+  return a.name.localeCompare(b.name, 'en', { numeric: true });
+}
+function getSortedClasses() {
+  return [...classes].sort((a, b) => rankCompare(a, b, getStats(a), getStats(b)));
+}
+
+function latestWeekWithData() {
+  let latest = 0;
+  classes.forEach(c => { for (let w = 1; w <= weekCount; w++) if (c.attendance[w] !== undefined && w > latest) latest = w; });
+  return latest;
+}
+
+// Positions as at the end of a given week
+function rankingsAtWeek(w) {
+  const ranked = classes.filter(c => entriesUpTo(c, w).length)
+    .sort((a, b) => rankCompare(a, b, getStats(a, w), getStats(b, w)));
+  const pos = {}; ranked.forEach((c, i) => pos[c.id] = i + 1); return pos;
+}
+function getMovements() {
+  const latest = latestWeekWithData();
+  return latest <= 1 ? {} : rankingsAtWeek(latest - 1);
+}
+
+function getMostImproved() {
+  const latest = latestWeekWithData();
+  if (latest <= 1) return null;
+  let best = null, bestDiff = 0;
+  classes.forEach(c => {
+    const curr = c.attendance[latest], prev = c.attendance[latest - 1];
+    if (curr !== undefined && prev !== undefined && curr - prev > bestDiff) { bestDiff = curr - prev; best = c; }
+  });
+  return best ? { cls: best, diff: bestDiff } : null;
+}
+function getBiggestClimber() {
+  const latest = latestWeekWithData();
+  if (latest <= 1) return null;
+  const curr = rankingsAtWeek(latest), prev = rankingsAtWeek(latest - 1);
+  let best = null, bestGain = 0;
+  classes.forEach(c => {
+    if (c.attendance[latest] === undefined || prev[c.id] === undefined || curr[c.id] === undefined) return;
+    const gain = prev[c.id] - curr[c.id];
+    if (gain > bestGain) { bestGain = gain; best = c; }
+  });
+  return best ? { cls: best, places: bestGain } : null;
+}
+function getMostImprovedAllTime() {
+  const latest = latestWeekWithData();
+  if (latest <= 1) return null;
+  let best = null, bestDiff = 0, fromW = 0, toW = 0;
+  classes.forEach(cls => {
+    for (let w = 2; w <= latest; w++) {
+      const curr = cls.attendance[w], prev = cls.attendance[w - 1];
+      if (curr !== undefined && prev !== undefined && curr - prev > bestDiff) { bestDiff = curr - prev; best = cls; fromW = w - 1; toW = w; }
+    }
+  });
+  return best ? { cls: best, diff: bestDiff, fromWeek: fromW, toWeek: toW } : null;
+}
+function getBiggestClimberAllTime() {
+  const latest = latestWeekWithData();
+  if (latest <= 1) return null;
+  let best = null, bestGain = 0, fromW = 0, toW = 0;
+  for (let w = 2; w <= latest; w++) {
+    const prev = rankingsAtWeek(w - 1), curr = rankingsAtWeek(w);
+    classes.forEach(cls => {
+      if (prev[cls.id] === undefined || curr[cls.id] === undefined) return;
+      const gain = prev[cls.id] - curr[cls.id];
+      if (gain > bestGain) { bestGain = gain; best = cls; fromW = w - 1; toW = w; }
+    });
+  }
+  return best ? { cls: best, places: bestGain, fromWeek: fromW, toWeek: toW } : null;
+}
+
+function getHouseStats() {
+  if (!usingHouses) return [];
+  const map = {};
+  classes.forEach(c => {
+    if (!c.house) return;
+    if (!map[c.house]) map[c.house] = { name: c.house, colour: c.colour, pts: 0, wins: 0, pcts: [], groups: 0 };
+    const s = getStats(c), h = map[c.house];
+    h.pts += s.pts; h.wins += s.wins; h.groups++;
+    if (s.overallPct !== null) h.pcts.push(s.overallPct);
+  });
+  return Object.values(map).map(h => ({
+    name: h.name, colour: h.colour, pts: h.pts, wins: h.wins, groups: h.groups,
+    avg: h.pcts.length ? h.pcts.reduce((a, b) => a + b, 0) / h.pcts.length : null,
+  })).sort((a, b) => b.pts !== a.pts ? b.pts - a.pts : (b.avg || 0) - (a.avg || 0));
+}
+
+// Things a group is defending right now — positive, never shaming
+function getTitleRace() {
+  const sorted = getSortedClasses().filter(c => getStats(c).played > 0);
+  if (sorted.length < 2) return null;
+  return { leader: sorted[0], chaser: sorted[1], gap: getStats(sorted[0]).pts - getStats(sorted[1]).pts };
+}
+function isUnbeaten(cls) { const es = entriesUpTo(cls); return es.length >= 3 && es.every(e => e.v >= 90); }
+let raceCache = null;
+function statusChip(cls) {
+  if (raceCache && raceCache.gap <= 3) {
+    if (cls.id === raceCache.leader.id) return `<span class="chip gold" title="Only ${raceCache.gap} point${raceCache.gap === 1 ? '' : 's'} clear at the top">👑 Defending top spot</span>`;
+    if (cls.id === raceCache.chaser.id) return `<span class="chip accent" title="Within reach of 1st place">${raceCache.gap === 0 ? 'Level on points with 1st' : raceCache.gap + ' pt' + (raceCache.gap === 1 ? '' : 's') + ' off top'}</span>`;
+  }
+  if (isUnbeaten(cls)) return `<span class="chip gold" title="Never below 90%">🛡 Unbeaten</span>`;
+  return '';
+}
+
+// ===================== FORMAT HELPERS =====================
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const pct = v => v === null || v === undefined ? '—' : v.toFixed(1) + '%';
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const nm = c => `${c.emoji ? c.emoji + ' ' : ''}${esc(c.name)}`;
+function ordSuffix(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return s[(v - 20) % 10] || s[v] || s[0]; }
+function rankBadge(pos, played) { return `<span class="rank${played && pos <= 3 ? ' r' + pos : ''}">${pos}</span>`; }
+function moveTag(prev, pos) {
+  if (prev === undefined) return '';
+  const d = prev - pos;
+  if (d > 0) return `<span class="move up" title="Up ${d} since last week">▲${d}</span>`;
+  if (d < 0) return `<span class="move down" title="Down ${-d} since last week">▼${-d}</span>`;
+  return `<span class="move flat" title="Same place as last week">–</span>`;
+}
+function formDots(s) {
+  return s.rows.length
+    ? `<span class="form-dots" title="One dot per week">${s.rows.map(r => `<span class="fd ${r.band.key}" title="Week ${r.week}: ${r.pct.toFixed(1)}% · ${r.band.label} · ${r.pts} pt${r.pts === 1 ? '' : 's'}"></span>`).join('')}</span>`
+    : '';
+}
+function streakChip(s) { return s.streak >= 2 ? `<span class="chip" title="${s.streak} weeks in a row at 95%+">🔥 ${s.streak}-week streak</span>` : ''; }
+function badgeChip(s) { return s.badges.length ? `<span class="chip" title="${esc(s.badges.map(b => b.emoji + ' ' + b.name).join(' · '))}">🏅 ${s.badges.length}</span>` : ''; }
+function houseQuote(name) { return esc(name).replace(/\\/g, '\\\\').replace(/&#39;/g, "\\'"); }
+
+// ===================== NAVIGATION =====================
+function showView(view) {
+  currentView = view;
+  document.querySelectorAll('.nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'view-' + view);
+  document.getElementById('viewTitle').textContent = VIEW_TITLES[view] || 'Overview';
+  window.scrollTo({ top: 0 });
+}
+
+// ===================== RENDER =====================
+function render() {
+  statsCache = new Map();
+  renderStatusLine();
+  document.getElementById('brandTitle').textContent = settings.title || 'Attendance League';
+
+  if (!classes.length) {
+    document.getElementById('dashboard').hidden = true;
+    renderSetup();
+    return;
+  }
+  document.getElementById('setupState').innerHTML = '';
+  document.getElementById('dashboard').hidden = false;
+
+  const sorted = getSortedClasses();
+  const prev = getMovements();
+  raceCache = getTitleRace();
+
+  renderOverview(sorted, prev);
+  renderTable(sorted, prev);
+  renderHouses();
+  renderBadges();
+  renderNews();
+  renderEntryTracker();
+  paintIcons();
+}
+
+function renderStatusLine() {
+  const sl = document.getElementById('statusLine');
+  if (!classes.length) { sl.innerHTML = ''; return; }
+  const lw = latestWeekWithData();
+  const pills = [];
+  pills.push(`<span class="pill">${plural(classes.length, 'group')}</span>`);
+  if (lw) pills.push(`<span class="pill">Latest: Week ${lw} of ${weekCount}</span>`);
+  if (lastLoadedAt) pills.push(`<span class="pill">Updated ${lastLoadedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>`);
+  sl.innerHTML = pills.join('');
+}
+
+function weekAverage(w) {
+  const vals = classes.map(c => c.attendance[w]).filter(v => v !== undefined);
+  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+}
+
+function renderOverview(sorted, prev) {
+  const lw = latestWeekWithData();
+  const avg = lw ? weekAverage(lw) : null;
+  const prevAvg = lw > 1 ? weekAverage(lw - 1) : null;
+  const winners = lw ? classes.filter(c => c.attendance[lw] !== undefined && c.attendance[lw] >= 95).length : 0;
+  const entered = lw ? classes.filter(c => c.attendance[lw] !== undefined).length : 0;
+  let delta = '';
+  if (avg !== null && prevAvg !== null) {
+    const d = avg - prevAvg;
+    delta = d > 0.05 ? `<span class="up">▲ ${d.toFixed(1)} pts on Week ${lw - 1}</span>`
+          : d < -0.05 ? `<span class="down">▼ ${(-d).toFixed(1)} pts on Week ${lw - 1}</span>`
+          : `<span class="flat">No change on Week ${lw - 1}</span>`;
+  }
+  const leader = sorted.find(c => getStats(c).played > 0);
+  const houses = getHouseStats();
+  const lastTile = usingHouses && houses.length
+    ? kpi('Leading house', esc(houses[0].name), `${houses[0].pts} points${houses[1] ? ` · ${houses[0].pts - houses[1].pts} clear of ${esc(houses[1].name)}` : ''}`)
+    : kpi('League leader', leader ? nm(leader) : '—', leader ? `${getStats(leader).pts} points` : '');
+
+  document.getElementById('kpiRow').innerHTML =
+    kpi('Weeks played', `${lw}<small>of ${weekCount}</small>`, lw ? `Week ${lw} is the latest entered` : 'No weeks entered yet') +
+    kpi(`Average attendance${lw ? ' · Week ' + lw : ''}`, pct(avg), delta || '&nbsp;') +
+    kpi(`Wins (95%+)${lw ? ' · Week ' + lw : ''}`, `${winners}<small>of ${entered}</small>`, lw ? `${plural(winners, 'group')} scored 3 points` : '&nbsp;') +
+    lastTile;
+
+  const top = sorted.filter(c => getStats(c).played > 0).slice(0, 5);
+  document.getElementById('top5').innerHTML = top.length ? top.map((c, i) => {
+    const s = getStats(c);
+    return `<div class="mini-row" onclick="openDetail(${c.id})">
+      <div>${rankBadge(i + 1, true)}</div>
+      <div class="mini-name"><span class="dot" style="background:${c.colour}"></span><span class="t">${nm(c)}</span>${c.house ? `<span class="mini-house">${esc(c.house)}</span>` : ''}</div>
+      <div class="mini-att">${pct(s.overallPct)}</div>
+      <div class="mini-pts">${s.pts}<small>pts</small></div>
+    </div>`;
+  }).join('') : `<div class="empty">No results yet.</div>`;
+
+  const card = document.getElementById('houseStandingsCard');
+  if (usingHouses && houses.length) {
+    card.hidden = false;
+    const max = Math.max(...houses.map(h => h.pts), 1);
+    document.getElementById('houseBars').innerHTML = houses.map((h, i) => `
+      <div class="hbar" onclick="openHouseDetail('${houseQuote(h.name)}')">
+        <div class="hbar-top"><b>${rankBadge(i + 1, true)}<span class="dot" style="background:${h.colour}"></span>${esc(h.name)}</b><span><b>${h.pts}</b> pts · ${pct(h.avg)}</span></div>
+        <div class="hbar-track"><div class="hbar-fill" style="width:${(h.pts / max * 100).toFixed(1)}%;background:${h.colour}"></div></div>
+      </div>`).join('');
+  } else card.hidden = true;
+  document.querySelector('#view-overview .grid-2').style.gridTemplateColumns = card.hidden ? 'minmax(0,1fr)' : '';
+}
+function kpi(label, value, sub) {
+  return `<div class="card kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="kpi-sub">${sub}</div></div>`;
+}
+
+function renderTable(sorted, prev) {
+  document.getElementById('tableBody').innerHTML = sorted.map((c, i) => {
+    const pos = i + 1, s = getStats(c);
+    return `<div class="t-row" onclick="openDetail(${c.id})">
+      <div class="c-pos">${rankBadge(pos, s.played > 0)}${moveTag(prev[c.id], pos)}</div>
+      <div>
+        <div class="g-name"><span class="dot" style="background:${c.colour}"></span>${nm(c)}${c.house ? `<span class="g-house">${esc(c.house)}</span>` : ''}</div>
+        <div class="g-meta">${formDots(s)}${streakChip(s)}${badgeChip(s)}${statusChip(c)}</div>
+      </div>
+      <div class="n hide-sm">${s.played}</div>
+      <div class="n hide-sm">${s.wins}</div>
+      <div class="n">${pct(s.overallPct)}</div>
+      <div class="p"><b>${s.pts}</b>${s.lastWeekPts !== null ? `<span>+${s.lastWeekPts} last week</span>` : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderHouses() {
+  const grid = document.getElementById('houseGrid');
+  const navBtn = document.querySelector('.nav-item[data-view="houses"]');
+  if (!usingHouses) {
+    navBtn.hidden = true;
+    grid.innerHTML = `<div class="card empty">No houses in the sheet. Add a House column to compare houses.</div>`;
+    return;
+  }
+  navBtn.hidden = false;
+  grid.innerHTML = getHouseStats().map((h, i) => `
+    <div class="card house-card" onclick="openHouseDetail('${houseQuote(h.name)}')">
+      <div class="house-strip" style="background:${h.colour}"></div>
+      <div class="house-body">
+        <div class="house-top"><span class="house-name">${esc(h.name)}</span>${rankBadge(i + 1, true)}</div>
+        <div class="house-pts">${h.pts}<small>points</small></div>
+        <div class="house-stats"><span>${pct(h.avg)} average</span><span>${plural(h.wins, 'win')}</span><span>${plural(h.groups, 'group')}</span></div>
+        <div class="house-link">View groups →</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderBadges() {
+  document.getElementById('badgeBoard').innerHTML = BADGES.map(b => {
+    const winners = getSortedClasses().filter(c => b.check(entriesUpTo(c)));
+    const earned = winners.length > 0;
+    return `<details class="badge-item${earned ? '' : ' locked'}">
+      <summary>
+        <span class="badge-emoji">${b.emoji}</span>
+        <span><span class="badge-name">${b.name}</span><span class="badge-desc" style="display:block">${b.desc}</span></span>
+        <span class="badge-count">${earned ? plural(winners.length, 'group') : 'Not yet earned'}</span>
+        <span class="badge-chev">▾</span>
+      </summary>
+      <div class="badge-winners">${earned
+        ? winners.map(c => `<span class="gchip"><span class="dot" style="background:${c.colour}"></span>${nm(c)}</span>`).join('')
+        : '<span class="empty">Nobody has earned this one yet.</span>'}</div>
+    </details>`;
+  }).join('');
+  document.getElementById('badgeToggle').textContent = 'Expand all';
+}
+function toggleAllBadges() {
+  const items = [...document.querySelectorAll('#badgeBoard details')];
+  const anyClosed = items.some(d => !d.open);
+  items.forEach(d => d.open = anyClosed);
+  document.getElementById('badgeToggle').textContent = anyClosed ? 'Collapse all' : 'Expand all';
+}
+
+// ===================== LEAGUE NEWS =====================
+function buildNewsLines() {
+  const lines = [];
+  const sorted = getSortedClasses().filter(c => getStats(c).played > 0);
+  if (!sorted.length) return lines;
+  const latest = latestWeekWithData();
+
+  const leader = sorted[0];
+  lines.push(`👑 ${nm(leader)} lead the league on ${getStats(leader).pts} points`);
+
+  const race = getTitleRace();
+  if (race && race.gap <= 3) {
+    lines.push(race.gap === 0
+      ? `⚔ ${nm(race.chaser)} are level on points with ${nm(race.leader)} at the top`
+      : `⚔ Just ${plural(race.gap, 'point')} between ${nm(race.leader)} and ${nm(race.chaser)} at the top`);
+  }
+
+  let sBest = null, sVal = 0;
+  classes.forEach(c => { const st = getStats(c).streak; if (st > sVal) { sVal = st; sBest = c; } });
+  if (sBest && sVal >= 2) lines.push(`🔥 ${nm(sBest)} have won ${sVal} weeks in a row at 95%+`);
+
+  const unbeaten = classes.filter(isUnbeaten);
+  if (unbeaten.length === 1) lines.push(`🛡 ${nm(unbeaten[0])} are the only group never to drop below 90%`);
+  else if (unbeaten.length > 1 && unbeaten.length <= 4) lines.push(`🛡 Still unbeaten (never below 90%): ${unbeaten.map(nm).join(', ')}`);
+
+  const bc = getBiggestClimber();
+  if (bc && bc.places >= 2) lines.push(`🚀 ${nm(bc.cls)} climbed ${bc.places} places this week`);
+  const mi = getMostImproved();
+  if (mi && mi.diff >= 1) lines.push(`📈 Biggest riser: ${nm(mi.cls)}, up ${mi.diff.toFixed(1)}% on the week before`);
+
+  if (latest) {
+    const perfect = classes.filter(c => c.attendance[latest] === 100);
+    if (perfect.length && perfect.length <= 5) lines.push(`💯 100% attendance in Week ${latest}: ${perfect.map(nm).join(', ')}`);
+    const wins = classes.filter(c => c.attendance[latest] !== undefined && c.attendance[latest] >= 95).length;
+    if (wins) lines.push(`✅ ${plural(wins, 'group')} won Week ${latest} with 95%+`);
+  }
+
+  if (usingHouses) {
+    const hs = getHouseStats();
+    if (hs.length >= 2) {
+      const gap = hs[0].pts - hs[1].pts;
+      lines.push(gap <= 5
+        ? `🏠 Close house race: ${esc(hs[0].name)} lead ${esc(hs[1].name)} by ${plural(gap, 'point')}`
+        : `🏠 ${esc(hs[0].name)} lead the house race on ${hs[0].pts} points`);
+    }
+  }
+
+  lines.push(`🎯 Every week at 95%+ is a win worth 3 points, wherever a group sits in the table`);
+  return lines;
+}
+function renderNews() {
+  const lines = buildNewsLines();
+  const lw = latestWeekWithData();
+  const sub = `${plural(lines.length, 'headline')}${lw ? ' · after Week ' + lw : ''}`;
+  document.getElementById('newsHint').textContent = sub;
+  document.getElementById('newsListSub').textContent = sub;
+  const item = (l, i) => `<div class="news-item"><span class="news-n">${String(i + 1).padStart(2, '0')}</span><span class="news-t">${l}</span></div>`;
+  document.getElementById('newsPreview').innerHTML = lines.slice(0, 4).map(item).join('') || '<div class="empty">Headlines appear once weekly attendance is entered.</div>';
+  document.getElementById('newsList').innerHTML = lines.map(item).join('') || '<div class="empty">Headlines appear once weekly attendance is entered.</div>';
+}
+
+function renderEntryTracker() {
+  const lw = latestWeekWithData();
+  const entered = lw ? classes.filter(c => c.attendance[lw] !== undefined).length : 0;
+  document.getElementById('weekCompletion').textContent = lw ? `Week ${lw}: ${entered}/${classes.length} entered` : 'No data yet';
+  document.getElementById('entryBarFill').style.width = classes.length ? (entered / classes.length * 100) + '%' : '0%';
+}
+
+function renderSetup() {
+  const el = document.getElementById('setupState');
+  if (effectiveSheetUrl()) {
+    el.innerHTML = `<div class="card setup">
+      <h2>Waiting for data</h2>
+      <p>The dashboard is connected to a Google Sheet but couldn't read any groups yet. This usually means the sheet is empty, not published, or still loading.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="refreshData()">Try again</button>
+        <button class="btn" onclick="openDataSource()">Change data source</button>
+      </div></div>`;
+  } else {
+    el.innerHTML = `<div class="card setup">
+      <h2>Welcome, let's get set up</h2>
+      <p>This dashboard reads live from a Google Sheet, so your team only ever edits a spreadsheet.</p>
+      <ol>
+        <li>Create a Google Sheet with columns <b>Group</b>, <b>House</b>, <b>Colour</b>, <b>Emoji</b>, then <b>Week 1</b>, <b>Week 2</b>… <button class="btn btn-sm" onclick="downloadTemplate()">Template</button></li>
+        <li>In Google Sheets: File → Share → <b>Publish to web</b> → <b>CSV</b> → copy the link.</li>
+        <li>Paste that link into the data source box.</li>
+      </ol>
+      <button class="btn btn-primary" onclick="openDataSource()">Connect a Google Sheet</button></div>`;
+  }
+}
+
+// ===================== DATA SOURCE / REFRESH =====================
+function effectiveSheetUrl() {
+  if (BUILT_IN_SHEET_URL && BUILT_IN_SHEET_URL.trim()) return BUILT_IN_SHEET_URL.trim();
+  return settings.sheetUrl || '';
+}
+function openDataSource() {
+  if (!requireAuth(openDataSource)) return;
+  document.getElementById('sheetUrlInput').value = effectiveSheetUrl();
+  document.getElementById('dataSourceOverlay').classList.add('open');
+}
+function closeDataSource() { document.getElementById('dataSourceOverlay').classList.remove('open'); }
+async function saveDataSource() {
+  const url = document.getElementById('sheetUrlInput').value.trim();
+  if (!url) { toast('Please paste a link first'); return; }
+  try {
+    await loadFromSheet(url, { silent: true });
+    settings.sheetUrl = url; saveSettings();
+    closeDataSource(); render(); toast('Connected, data loaded');
+  } catch (e) { toast('Could not read that sheet. Check it is published to the web as CSV.'); }
+}
+async function refreshData() {
+  const url = effectiveSheetUrl();
+  if (!url) { openDataSource(); return; }
+  try { await loadFromSheet(url); render(); }
+  catch (e) { toast('Refresh failed. Check the sheet is still published.'); render(); }
+}
+function downloadTemplate() {
+  const csv = 'Group,House,Colour,Emoji,Week 1,Week 2,Week 3,Week 4,Week 5,Week 6\n' +
+    '7A,Dragon,Red,🐉,,,,,,\n7B,Griffin,Green,🦅,,,,,,\n8A,Dragon,Red,⚡,,,,,,\n8B,Griffin,Green,⭐,,,,,,\n';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'attendance-league-template.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ===================== TOAST =====================
+let toastTimer = null;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ===================== PIN / ADMIN =====================
+function requireAuth(callback) {
+  if (isAuthenticated) return true;
+  pinCallback = callback;
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('pinInput').focus(), 50);
+  return false;
+}
+function submitPin() {
+  if (document.getElementById('pinInput').value === (settings.pin || DEFAULT_PIN)) {
+    isAuthenticated = true;
+    document.getElementById('pinOverlay').classList.remove('open');
+    const cb = pinCallback; pinCallback = null;
+    if (cb) cb();
+  } else {
+    toast('Incorrect PIN');
+    document.getElementById('pinInput').value = '';
+  }
+}
+function closePin() { document.getElementById('pinOverlay').classList.remove('open'); pinCallback = null; }
+function toggleAdmin() {
+  const bar = document.getElementById('adminBar');
+  if (!bar.hidden) { bar.hidden = true; document.getElementById('showAdminBtn').classList.remove('active'); return; }
+  if (!requireAuth(toggleAdmin)) return;
+  bar.hidden = false;
+  document.getElementById('showAdminBtn').classList.add('active');
+}
+function toggleCredit() { document.getElementById('creditPopup').classList.toggle('open'); }
+
+// ===================== GROUP CARD =====================
+// Weekly bars, coloured by result. `large` adds percentage labels.
+function sparkSVG(cls, large) {
+  const W = large ? 560 : 280, H = large ? 92 : 46, gap = large ? 8 : 5, top = large ? 18 : 4;
+  const n = Math.max(weekCount, 1);
+  const barW = Math.min(large ? 64 : 30, Math.max(8, (W - gap * (n - 1)) / n));
+  const x0 = (W - (barW * n + gap * (n - 1))) / 2;
+  const colour = { win: '#2f9e5b', draw: '#e2a12b', point: '#3d78d6', none: '#d4566e' };
+  let out = '';
+  for (let w = 1; w <= weekCount; w++) {
+    const v = cls.attendance[w];
+    const x = x0 + (w - 1) * (barW + gap);
+    const h = v !== undefined ? Math.max(3, (Math.max(0, v - 50) / 50) * (H - top)) : 3;
+    const col = v !== undefined ? colour[bandFor(v).key] : '#e6e9f0';
+    out += `<rect x="${x.toFixed(1)}" y="${(H - h).toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${col}"/>`;
+    if (large && v !== undefined) out += `<text x="${(x + barW / 2).toFixed(1)}" y="${(H - h - 5).toFixed(1)}" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#4b5563">${v.toFixed(1)}</text>`;
+    out += `<text x="${(x + barW / 2).toFixed(1)}" y="${H + (large ? 14 : 11)}" text-anchor="middle" font-family="Inter,sans-serif" font-size="${large ? 10 : 8}" fill="#8a93a6">W${w}</text>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H + (large ? 18 : 14)}" style="width:100%;display:block" role="img" aria-label="Weekly attendance for ${esc(cls.name)}">${out}</svg>`;
+}
+
+// The single next target for this group, in points
+function groupMission(s) {
+  const last = s.rows.length ? s.rows[s.rows.length - 1] : null;
+  if (!last) return 'First week on the board: <b>95%+</b> is a win worth 3 points.';
+  if (last.pct >= 95) return s.streak >= 2
+    ? `Another week at <b>95%+</b> makes it ${s.streak + 1} wins in a row (3 more points).`
+    : 'Hold <b>95%+</b> for another win and 3 more points.';
+  const next = [...BANDS].reverse().find(b => b.min > last.pct);
+  return `Last week was ${last.pct.toFixed(1)}% (${last.band.label.toLowerCase()}). Reach <b>${next.min}%</b> for a ${next.label.toLowerCase()} worth ${plural(next.pts, 'point')}.`;
+}
+
+function groupCardHTML(cls, pos, total, prevPos, large) {
+  const s = getStats(cls);
+  let move = '';
+  if (prevPos !== undefined) {
+    const d = prevPos - pos;
+    move = d > 0 ? ` · <span class="up">▲${d} this week</span>` : d < 0 ? ` · <span class="down">▼${-d} this week</span>` : ' · <span class="flat">same place</span>';
+  }
+  const next = getNextBadge(cls);
+  let ledger = '';
+  if (large) {
+    ledger = `<div class="tc-section">Week by week</div>
+      <table class="ledger">
+        <thead><tr><th>Week</th><th>Attendance</th><th>Result</th><th class="num">Points</th></tr></thead>
+        <tbody>${s.rows.map(r => `<tr><td>Week ${r.week}</td><td>${r.pct.toFixed(1)}%</td><td><span class="res ${r.band.key}">${r.band.label}</span></td><td class="num">${r.pts}</td></tr>`).join('')
+          || '<tr><td colspan="4" class="empty">No weeks recorded yet.</td></tr>'}</tbody>
+        <tfoot><tr><td colspan="3">Total</td><td class="num">${s.pts}</td></tr></tfoot>
+      </table>`;
+  }
+  const badges = s.badges.length
+    ? s.badges.map(b => large
+        ? `<span class="tc-badge-lg"><span style="font-size:1.2rem">${b.emoji}</span><span><b>${b.name}</b><i>${b.desc}</i></span></span>`
+        : `<span class="chip" title="${b.desc}">${b.emoji} ${b.name}</span>`).join('')
+    : '<span class="empty">No badges yet.</span>';
+  return `<div class="tutor-card${large ? ' tc-large' : ''}" style="--cc:${cls.colour}">
+    <div class="tc-head">
+      <span class="dot" style="background:${cls.colour}"></span>
+      <div><div class="tc-name">${nm(cls)}</div><div class="tc-house">${cls.house ? esc(cls.house) : 'No house'}${move}</div></div>
+      <div class="tc-pos"><div class="n">${pos}${ordSuffix(pos)}</div><div class="l">of ${total}</div></div>
+    </div>
+    <div class="tc-stats">
+      <div class="tc-stat"><div class="v">${s.pts}</div><div class="l">Points</div></div>
+      <div class="tc-stat"><div class="v">${pct(s.overallPct)}</div><div class="l">Average</div></div>
+      <div class="tc-stat"><div class="v">${s.wins}</div><div class="l">Wins</div></div>
+      <div class="tc-stat"><div class="v">${s.streak}</div><div class="l">Streak</div></div>
+    </div>
+    <div class="tc-spark">${sparkSVG(cls, large)}</div>
+    ${ledger}
+    <div class="tc-section">Badges</div>
+    <div class="tc-badges">${badges}</div>
+    <div class="tc-note">🎯 This week: ${groupMission(s)}</div>
+    ${next ? `<div class="tc-note">🏅 Next badge to aim for: <b>${next.emoji} ${next.name}</b> (${next.desc})</div>` : ''}
+    <div class="tc-foot">${esc(settings.title || 'Attendance League')}${latestWeekWithData() ? ' · after Week ' + latestWeekWithData() : ''}</div>
+  </div>`;
+}
+
+function openDetail(id) {
+  const cls = classes.find(c => c.id === id);
+  if (!cls) return;
+  const sorted = getSortedClasses();
+  const pos = sorted.findIndex(c => c.id === id) + 1;
+  document.getElementById('detailCard').innerHTML = groupCardHTML(cls, pos, sorted.length, getMovements()[cls.id], true);
+  document.getElementById('detailOverlay').classList.add('open');
+}
+function closeDetail() { document.getElementById('detailOverlay').classList.remove('open'); }
+function printGroup() { printWith('printing-group', 'A4 portrait', '12mm'); }
+
+// ===================== HOUSE DETAIL =====================
+function openHouseDetail(houseName) {
+  const members = getSortedClasses().filter(c => c.house === houseName);
+  if (!members.length) return;
+  const sortedAll = getSortedClasses();
+  const h = getHouseStats().find(x => x.name === houseName);
+  const badges = members.reduce((a, c) => a + getStats(c).badges.length, 0);
+  document.getElementById('houseDetailName').innerHTML = `<span class="dot" style="background:${members[0].colour};width:14px;height:14px"></span>${esc(houseName)}`;
+  document.getElementById('houseDetailSub').textContent = `${plural(members.length, 'group')} · ranked by points`;
+  document.getElementById('houseDetailStats').innerHTML = `
+    <div class="stat"><div class="v">${h.pts}</div><div class="l">Total points</div></div>
+    <div class="stat"><div class="v">${pct(h.avg)}</div><div class="l">Average attendance</div></div>
+    <div class="stat"><div class="v">${h.wins}</div><div class="l">Weekly wins</div></div>
+    <div class="stat"><div class="v">${badges}</div><div class="l">Badges</div></div>`;
+  document.getElementById('houseGroupsList').innerHTML = members.map(c => {
+    const s = getStats(c);
+    let weeks = '';
+    for (let w = 1; w <= weekCount; w++) {
+      const v = c.attendance[w];
+      weeks += `<span class="wk ${v !== undefined ? bandFor(v).key : 'blank'}"><i>W${w}</i><b>${v !== undefined ? v.toFixed(1) : '–'}</b></span>`;
+    }
+    const overall = sortedAll.findIndex(x => x.id === c.id) + 1;
+    return `<div class="hg-row" onclick="closeHouseDetail();openDetail(${c.id})">
+      <div class="hg-top">
+        <div class="g-name"><span class="dot" style="background:${c.colour}"></span>${nm(c)}<span class="g-house">${overall}${ordSuffix(overall)} overall</span></div>
+        <div class="n">${plural(s.wins, 'win')}</div>
+        <div class="n">${pct(s.overallPct)}</div>
+        <div class="p">${s.pts} pts</div>
+      </div>
+      <div class="hg-weeks">${weeks}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('houseDetailOverlay').classList.add('open');
+}
+function closeHouseDetail() { document.getElementById('houseDetailOverlay').classList.remove('open'); }
+
+// ===================== PRINTING =====================
+function printWith(bodyClass, size, margin) {
+  let ps = document.getElementById('printPageStyle');
+  if (!ps) { ps = document.createElement('style'); ps.id = 'printPageStyle'; document.head.appendChild(ps); }
+  ps.textContent = `@media print { @page { size: ${size}; margin: ${margin}; } }`;
+  if (bodyClass) document.body.classList.add(bodyClass);
+  window.print();
+  setTimeout(() => { if (bodyClass) document.body.classList.remove(bodyClass); }, 500);
+}
+function printPage() { printWith(null, 'A3 portrait', '10mm'); }   // prints the view on screen
+function printSheet() { printWith('printing-sheet', 'A4 portrait', '10mm'); }
+
+// ===================== HIGHLIGHTS =====================
+function buildHighlights() {
+  const sorted = getSortedClasses().filter(c => getStats(c).played > 0);
+  const lw = latestWeekWithData();
+  const top3 = sorted.slice(0, 3).map((c, i) => {
+    const s = getStats(c);
+    return `<div class="card hl-row" style="padding:14px 18px;margin-bottom:10px;border-left:5px solid ${c.colour}">
+      ${rankBadge(i + 1, true)}
+      <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:1.05rem">${nm(c)}</div><div style="color:var(--dim);font-size:0.82rem">${c.house ? esc(c.house) + ' · ' : ''}${pct(s.overallPct)} average · ${plural(s.wins, 'win')}</div></div>
+      <div style="font-weight:700;font-size:1.3rem">${s.pts}<span style="font-size:0.8rem;color:var(--dim);font-weight:500"> pts</span></div>
+    </div>`;
+  }).join('') || '<div class="empty">No results recorded yet.</div>';
+
+  const houses = getHouseStats();
+  const houseHtml = usingHouses && houses.length ? `
+    <div class="hl-section">Winning house</div>
+    <div class="card hl-row" style="padding:14px 18px;border-left:5px solid ${houses[0].colour}">
+      <div style="flex:1"><div style="font-weight:700;font-size:1.05rem">${esc(houses[0].name)}</div><div style="color:var(--dim);font-size:0.82rem">${pct(houses[0].avg)} average · ${plural(houses[0].wins, 'weekly win')}</div></div>
+      <div style="font-weight:700;font-size:1.3rem">${houses[0].pts}<span style="font-size:0.8rem;color:var(--dim);font-weight:500"> pts</span></div>
+    </div>` : '';
+
+  const mi = getMostImprovedAllTime(), bc = getBiggestClimberAllTime();
+  const mention = (title, body) => `<div class="card" style="padding:14px 16px"><div style="font-size:0.78rem;color:var(--dim)">${title}</div><div style="font-weight:600;margin-top:2px">${body}</div></div>`;
+  const mentions = `<div class="grid" style="grid-template-columns:1fr 1fr">
+    ${mention('📈 Biggest weekly rise', mi ? `${nm(mi.cls)} <span style="color:var(--win)">+${mi.diff.toFixed(1)}%</span> <span style="color:var(--dim);font-weight:400">(Week ${mi.fromWeek} → ${mi.toWeek})</span>` : 'Not enough weeks yet')}
+    ${mention('🚀 Biggest climber', bc ? `${nm(bc.cls)} <span style="color:var(--win)">▲${bc.places}</span> <span style="color:var(--dim);font-weight:400">(Week ${bc.fromWeek} → ${bc.toWeek})</span>` : 'Not enough weeks yet')}
+  </div>`;
+
+  const badgeCards = BADGES.map(b => {
+    const winners = getSortedClasses().filter(c => b.check(entriesUpTo(c)));
+    if (!winners.length) return '';
+    return `<div class="card" style="padding:12px 14px"><div style="font-weight:600">${b.emoji} ${b.name}</div><div style="font-size:0.78rem;color:var(--dim);margin-bottom:8px">${b.desc}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${winners.map(c => `<span class="gchip"><span class="dot" style="background:${c.colour}"></span>${nm(c)}</span>`).join('')}</div></div>`;
+  }).filter(Boolean).join('');
+
+  return `<div class="sheet-head"><h2>Highlights</h2><p>${esc(settings.title || 'Attendance League')}${lw ? ' · after Week ' + lw : ''}</p></div>
+    <div class="hl-section">Top three</div>${top3}
+    ${houseHtml}
+    <div class="hl-section">Special mentions</div>${mentions}
+    <div class="hl-section">Badge winners</div>
+    ${badgeCards ? `<div class="hl-badges">${badgeCards}</div>` : '<div class="empty">No badges earned yet.</div>'}`;
+}
+function openHighlights() {
+  if (!classes.length) { toast('No data loaded yet'); return; }
+  document.getElementById('highlightsSheet').innerHTML = buildHighlights();
+  document.getElementById('highlightsOverlay').classList.add('open');
+}
+function closeHighlights() { document.getElementById('highlightsOverlay').classList.remove('open'); }
+
+// ===================== TUTOR CARDS =====================
+function openTutorCards() {
+  if (!classes.length) { toast('No data loaded yet'); return; }
+  const sorted = getSortedClasses(), prev = getMovements();
+  document.getElementById('cardsGrid').innerHTML = sorted.map((c, i) => groupCardHTML(c, i + 1, sorted.length, prev[c.id], false)).join('');
+  document.getElementById('cardsOverlay').classList.add('open');
+}
+function closeTutorCards() { document.getElementById('cardsOverlay').classList.remove('open'); }
+
+// ===================== ASSEMBLY REVEAL =====================
+// Reveals the table from last place up to the champions.
+let reveal = { open: false, started: false, finished: false, paused: false, auto: true, steps: [], idx: -1, timer: null, last: null };
+let soundOn = true;
+let audioCtx = null;
+function ac() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  } catch (e) { return null; }
+}
+function tone(freq, dur, vol, when) {
+  if (!soundOn) return;
+  const ctx = ac(); if (!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'sine'; o.frequency.value = freq;
+  o.connect(g); g.connect(ctx.destination);
+  const t = ctx.currentTime + (when || 0);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol || 0.12, t + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.2));
+  o.start(t); o.stop(t + (dur || 0.2) + 0.05);
+}
+function drumroll(duration) {
+  if (!soundOn) return;
+  const ctx = ac(); if (!ctx) return;
+  const n = Math.floor(ctx.sampleRate * duration);
+  const buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 800;
+  const g = ctx.createGain(); g.gain.value = 0;
+  const t = ctx.currentTime, hits = Math.floor(duration * 15), step = duration / hits;
+  for (let i = 0; i < hits; i++) {
+    const ht = t + i * step;
+    g.gain.setValueAtTime(0.001, ht);
+    g.gain.exponentialRampToValueAtTime(0.22, ht + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, ht + step * 0.85);
+  }
+  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+  src.start(t); src.stop(t + duration);
+}
+function fanfare() {
+  [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, 0.22, 0.12, i * 0.14));
+  [523.25, 659.25, 783.99].forEach(f => tone(f, 1.0, 0.08, 0.62));
+}
+
+function openReveal() {
+  const sorted = getSortedClasses().filter(c => getStats(c).played > 0);
+  if (!sorted.length) { toast('No results to reveal yet'); return; }
+  const steps = [];
+  sorted.map((c, i) => ({ cls: c, pos: i + 1 })).reverse().forEach(o => {
+    if (o.pos === 3) steps.push({ type: 'inter', text: 'In third place…' });
+    if (o.pos === 2) steps.push({ type: 'inter', text: 'In second place…' });
+    if (o.pos === 1) steps.push({ type: 'inter', text: 'And your champions are…' });
+    steps.push({ type: o.pos === 1 ? 'champ' : 'card', cls: o.cls, pos: o.pos, total: sorted.length });
+  });
+  reveal = { open: true, started: false, finished: false, paused: false, auto: true, steps, idx: -1, timer: null, last: null };
+  document.getElementById('revealSub').textContent = settings.title || 'Attendance League';
+  document.getElementById('revealDone').innerHTML = '';
+  document.getElementById('revealHint').hidden = true;
+  document.getElementById('revealStage').innerHTML = `<div class="reveal-start">
+    <p>${sorted.length} groups, revealed from ${sorted.length}${ordSuffix(sorted.length)} place up to 1st.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="startReveal(true)">Start the reveal</button>
+      <button class="btn" onclick="startReveal(false)">Click to advance</button>
+    </div></div>`;
+  document.getElementById('revealOverlay').classList.add('open');
+  renderRevealControls();
+}
+function renderRevealControls() {
+  const c = document.getElementById('revealControls');
+  const sound = `<button class="btn" onclick="soundOn=!soundOn;renderRevealControls()">${soundOn ? 'Sound on' : 'Sound off'}</button>`;
+  if (!reveal.started) c.innerHTML = `${sound}<button class="btn" onclick="closeReveal()">Close</button>`;
+  else if (reveal.finished) c.innerHTML = `<button class="btn btn-primary" onclick="openReveal()">Run it again</button><button class="btn" onclick="closeReveal()">Close</button>`;
+  else c.innerHTML = `${reveal.auto ? `<button class="btn" onclick="toggleRevealPause()">${reveal.paused ? 'Resume' : 'Pause'}</button>` : ''}
+    <button class="btn" onclick="skipToChampion()">Skip to champions</button>${sound}<button class="btn" onclick="closeReveal()">Close</button>`;
+}
+function toggleRevealPause() {
+  reveal.paused = !reveal.paused;
+  if (!reveal.paused) scheduleRevealStep(500); else clearTimeout(reveal.timer);
+  renderRevealControls();
+}
+function startReveal(auto) {
+  ac();
+  reveal.started = true; reveal.auto = auto;
+  document.getElementById('revealHint').hidden = auto;
+  renderRevealControls();
+  if (auto) scheduleRevealStep(400); else revealStep();
+}
+function revealAdvance() {
+  if (!reveal.started || reveal.finished || reveal.paused) return;
+  clearTimeout(reveal.timer);
+  revealStep();
+}
+function scheduleRevealStep(delay) {
+  clearTimeout(reveal.timer);
+  if (reveal.auto && !reveal.paused) reveal.timer = setTimeout(revealStep, delay);
+}
+function stashLast() {
+  if (!reveal.last) return;
+  const { cls, pos } = reveal.last;
+  document.getElementById('revealDone').insertAdjacentHTML('afterbegin',
+    `<span class="gchip"><b>${pos}${ordSuffix(pos)}</b><span class="dot" style="background:${cls.colour}"></span>${nm(cls)}</span>`);
+  reveal.last = null;
+}
+function revealStep() {
+  reveal.idx++;
+  const step = reveal.steps[reveal.idx];
+  if (!step) return;
+  const stage = document.getElementById('revealStage');
+  stashLast();
+  if (step.type === 'inter') {
+    const champ = step.text.includes('champions');
+    stage.innerHTML = `<div class="reveal-inter">${step.text}</div>`;
+    drumroll(champ ? 2.2 : 1.6);
+    scheduleRevealStep(champ ? 2400 : 1900);
+  } else if (step.type === 'card') {
+    const s = getStats(step.cls);
+    const medal = step.pos === 2 ? '🥈 ' : step.pos === 3 ? '🥉 ' : '';
+    stage.innerHTML = `<div class="reveal-card" style="--rc:${step.cls.colour}">
+      <div class="reveal-pos">${step.pos}${ordSuffix(step.pos)}</div>
+      <div style="min-width:0">
+        <div class="reveal-name">${medal}${nm(step.cls)}</div>
+        <div class="reveal-meta"><span><b>${s.pts}</b> points</span><span><b>${pct(s.overallPct)}</b> average</span>${step.cls.house ? `<span>${esc(step.cls.house)}</span>` : ''}</div>
+      </div></div>`;
+    reveal.last = { cls: step.cls, pos: step.pos };
+    tone(300 + (step.total - step.pos) * (500 / step.total), 0.16, 0.1);
+    scheduleRevealStep(step.pos > 10 ? 1100 : step.pos > 3 ? 1600 : 2400);
+  } else {
+    const s = getStats(step.cls);
+    stage.innerHTML = `<div class="reveal-champ" style="--rc:${step.cls.colour}">
+      <div class="trophy">🏆</div>
+      <div class="lab">Your champions</div>
+      <div class="nm">${nm(step.cls)}</div>
+      <div class="reveal-meta" style="justify-content:center"><span><b>${s.pts}</b> points</span><span><b>${pct(s.overallPct)}</b> average</span><span><b>${s.wins}</b> wins</span>${step.cls.house ? `<span>${esc(step.cls.house)}</span>` : ''}</div>
+    </div>`;
+    reveal.finished = true;
+    document.getElementById('revealHint').hidden = true;
+    fanfare();
+    renderRevealControls();
+  }
+}
+function skipToChampion() {
+  clearTimeout(reveal.timer);
+  stashLast();
+  for (let i = reveal.idx + 1; i < reveal.steps.length; i++) {
+    const st = reveal.steps[i];
+    if (st.type === 'card') { reveal.last = { cls: st.cls, pos: st.pos }; stashLast(); }
+  }
+  reveal.idx = reveal.steps.findIndex(s => s.type === 'champ') - 1;
+  revealStep();
+}
+function closeReveal() {
+  clearTimeout(reveal.timer);
+  reveal.open = false; reveal.started = false;
+  document.getElementById('revealOverlay').classList.remove('open');
+}
+
+// ===================== KIOSK MODE =====================
+// Full-screen display for corridor screens: cycles views every 12 seconds and
+// re-reads the sheet every 5 minutes.
+let kiosk = { open: false, idx: 0, slideTimer: null, clockTimer: null, refreshTimer: null, slides: [] };
+const KIOSK_SLIDE_MS = 12000, KIOSK_REFRESH_MS = 5 * 60 * 1000;
+
+function kioskRow(c, pos) {
+  const s = getStats(c);
+  return `<div class="k-row">
+    ${rankBadge(pos, true)}
+    <div class="k-name"><span class="dot" style="background:${c.colour}"></span><span class="t">${nm(c)}</span>${c.house ? `<span class="h">${esc(c.house)}</span>` : ''}${s.streak >= 2 ? `<span class="chip">🔥 ${s.streak}</span>` : ''}</div>
+    <div class="k-att">${pct(s.overallPct)}</div>
+    <div class="k-pts">${s.pts}<small>pts</small></div>
+  </div>`;
+}
+function buildKioskSlides() {
+  const slides = [];
+  const sorted = getSortedClasses().filter(c => getStats(c).played > 0);
+  if (!sorted.length) return slides;
+  slides.push({ title: 'Top of the league', html: `<div class="kiosk-rows">${sorted.slice(0, 10).map((c, i) => kioskRow(c, i + 1)).join('')}</div>` });
+  // the rest of the table, split evenly into pages of no more than 20 so every group gets screen time
+  const rest = sorted.length - 10;
+  const perPage = rest > 0 ? Math.ceil(rest / Math.ceil(rest / 20)) : 20;
+  for (let start = 10; start < sorted.length; start += perPage) {
+    const end = Math.min(start + perPage, sorted.length);
+    slides.push({ title: `Places ${start + 1} to ${end}`, html: `<div class="kiosk-cols">${sorted.slice(start, end).map((c, i) => kioskRow(c, start + i + 1)).join('')}</div>` });
+  }
+  if (usingHouses) {
+    const hs = getHouseStats();
+    if (hs.length) slides.push({ title: 'House race', html: `<div class="k-houses">${hs.map((h, i) => `
+      <div class="k-house"><div class="house-strip" style="background:${h.colour}"></div>
+        <div class="k-house-body"><div class="pos">${i + 1}${ordSuffix(i + 1)}</div><div class="nm">${esc(h.name)}</div>
+        <div class="pts">${h.pts}<small>pts</small></div><div class="avg">${pct(h.avg)} average</div></div></div>`).join('')}</div>` });
+  }
+  const lines = buildNewsLines();
+  if (lines.length) slides.push({ title: 'League news', html: `<div class="k-news">${lines.slice(0, 5).map(l => `<div>${l}</div>`).join('')}</div>` });
+  const earned = BADGES.map(b => ({ b, winners: sorted.filter(c => b.check(entriesUpTo(c))) })).filter(x => x.winners.length);
+  if (earned.length) slides.push({ title: 'Badge winners', html: `<div class="k-badges">${earned.map(({ b, winners }) => `
+    <div class="k-badge"><div class="hd">${b.emoji} ${b.name}</div><div class="ds">${b.desc}</div>
+      <div class="ws">${winners.map(c => `<span class="gchip"><span class="dot" style="background:${c.colour}"></span>${nm(c)}</span>`).join('')}</div></div>`).join('')}</div>` });
+  return slides;
+}
+function openKiosk() {
+  kiosk.slides = buildKioskSlides();
+  if (!kiosk.slides.length) { toast('No data to display yet'); return; }
+  kiosk.open = true; kiosk.idx = 0;
+  document.getElementById('kioskTitle').textContent = settings.title || 'Attendance League';
+  updateKioskMeta();
+  document.getElementById('kioskOverlay').classList.add('open');
+  try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); } catch (e) {}
+  showKioskSlide(0, true);
+  tickKioskClock();
+  kiosk.clockTimer = setInterval(tickKioskClock, 1000);
+  kiosk.slideTimer = setInterval(() => showKioskSlide((kiosk.idx + 1) % kiosk.slides.length), KIOSK_SLIDE_MS);
+  kiosk.refreshTimer = setInterval(async () => {
+    const url = effectiveSheetUrl();
+    if (!url) return;
+    try {
+      await loadFromSheet(url, { silent: true });
+      render();
+      kiosk.slides = buildKioskSlides();
+      updateKioskMeta();
+      showKioskSlide(Math.min(kiosk.idx, kiosk.slides.length - 1), true);
+    } catch (e) {}
+  }, KIOSK_REFRESH_MS);
+}
+function updateKioskMeta() {
+  const lw = latestWeekWithData();
+  document.getElementById('kioskMeta').textContent = lw ? `After Week ${lw} · 3 points for a win (95%+)` : '';
+}
+function tickKioskClock() {
+  document.getElementById('kioskClock').textContent = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+function showKioskSlide(i, instant) {
+  const slide = kiosk.slides[i];
+  if (!slide) return;
+  kiosk.idx = i;
+  const el = document.getElementById('kioskSlide');
+  const swap = () => {
+    document.getElementById('kioskSlideTitle').textContent = slide.title;
+    el.innerHTML = slide.html;
+    document.getElementById('kioskDots').innerHTML = kiosk.slides.map((_, d) => `<div class="kiosk-dot${d === i ? ' on' : ''}"></div>`).join('');
+    el.classList.remove('fading');
+  };
+  if (instant) { swap(); return; }
+  el.classList.add('fading');
+  setTimeout(swap, 450);
+}
+function closeKiosk() {
+  kiosk.open = false;
+  clearInterval(kiosk.slideTimer); clearInterval(kiosk.clockTimer); clearInterval(kiosk.refreshTimer);
+  document.getElementById('kioskOverlay').classList.remove('open');
+  try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+}
+
+// ===================== KEYBOARD =====================
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (reveal.open) return closeReveal();
+    if (kiosk.open) return closeKiosk();
+    ['detailOverlay', 'houseDetailOverlay', 'dataSourceOverlay', 'highlightsOverlay', 'cardsOverlay'].forEach(id => document.getElementById(id).classList.remove('open'));
+    closePin();
+  }
+  if ((e.key === ' ' || e.key === 'Enter') && reveal.open && reveal.started && !reveal.finished && !e.target.closest('button')) {
+    e.preventDefault();
+    revealAdvance();
+  }
+});
+// Click anywhere on the reveal background to advance (tap-to-advance mode)
+document.getElementById('revealOverlay').addEventListener('click', e => {
+  if (e.target.closest('button')) return;
+  if (reveal.started && !reveal.finished) revealAdvance();
+});
+// Click outside a modal to close it
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => {
+  if (e.target === o && o.id !== 'pinOverlay') o.classList.remove('open');
+}));
+
+// ===================== INIT =====================
+async function init() {
+  loadSettings();
+  paintIcons();
+  render();
+  const url = effectiveSheetUrl();
+  if (url) {
+    try { await loadFromSheet(url, { silent: true }); }
+    catch (e) {}
+    render();
+  }
+}
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
